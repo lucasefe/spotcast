@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "outDir": "./dist/server",
+        "strict": true,
+        "sourceMap": true,
+        "watch": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+            "dist",
+            "node_modules"
+    ]
+}
