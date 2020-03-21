@@ -1,11 +1,15 @@
 {
     "compilerOptions": {
-        "target": "es6",
         "module": "commonjs",
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "target": "es6",
         "outDir": "./dist/server",
         "strict": true,
-        "sourceMap": true,
-        "watch": true
+        "removeComments": false,
+        "allowSyntheticDefaultImports": true,
+        "suppressExcessPropertyErrors": true
     },
     "include": [
         "src/**/*"
