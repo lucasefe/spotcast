@@ -20,7 +20,7 @@ class Server {
     this.sockets.on("connection", socket => {
       const user = new User();
       const event = new UserConnectedEvent(user)
-      socket.emit(UserConnectedEvent.eventName, event);
+      this.sockets.emit(UserConnectedEvent.eventName, event);
     });
   }
 
