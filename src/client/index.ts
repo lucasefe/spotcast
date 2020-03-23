@@ -1,5 +1,6 @@
 import SocketIOClient from "socket.io-client";
-import { UserConnectedEvent } from "../events";
+import * as ServerEvents from "../server/events";
+import * as ClientEvents from "./events";
 import * as events from "events";
 
 enum Statuses {
@@ -25,16 +26,15 @@ class Client extends events.EventEmitter {
   async connect() {
     return new Promise(resolve => {
       this.socket = SocketIOClient(this.url);
-      this.socket.on(
-        UserConnectedEvent.eventName,
-        (data: UserConnectedEvent) => {
+      this.socket.on(ServerEvents.UserConnectedEvent.eventName,
+        (data: ServerEvents.UserConnectedEvent) => {
           this.status = Statuses.connected;
 
           if (this.userId && this.userId !== data.userId) {
-            this.emit("user-connected", data);
+            this.emit(ClientEvents.UserConnectedEvent.eventName, data);
           } else {
             this.userId = data.userId;
-            this.emit("connected", data);
+            this.emit(ClientEvents.ConnectedEvent.eventName, data);
           }
           resolve();
         }

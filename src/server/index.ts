@@ -3,8 +3,8 @@ import * as http from "http";
 import SocketIO from "socket.io";
 import * as events from "events"
 import * as uuid from 'uuid';
-import { UserConnectedEvent } from '../events';
-import { User } from '../models/user';
+import { UserConnectedEvent } from './events';
+import { User } from './models/user';
 
 
 class Server {
