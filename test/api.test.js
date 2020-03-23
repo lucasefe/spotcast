@@ -26,10 +26,6 @@ describe('spotcast api', () => {
       client.connect();
     });
 
-    it('has a status equal to Connected', function() {
-      assert.equal(client.status, 'Connected');
-    });
-
     describe('connected payload', function() {
       it('includes a userId', function() {
         assert(connectedData.userId);
