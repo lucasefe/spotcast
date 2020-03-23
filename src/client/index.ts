@@ -14,7 +14,7 @@ class Client extends events.EventEmitter {
   private socket: SocketIOClient.Socket | null;
   private url: string;
 
-  constructor(url: string, done: () => {}) {
+  constructor(url: string) {
     super();
 
     this.url = url;
@@ -23,9 +23,10 @@ class Client extends events.EventEmitter {
     this.userId = null;
   }
 
-  async connect() {
+  async connect(): Promise<void> {
     return new Promise(resolve => {
       this.socket = SocketIOClient(this.url);
+
       this.socket.on(ServerEvents.UserConnectedEvent.eventName,
         (data: ServerEvents.UserConnectedEvent) => {
           this.status = Statuses.connected;

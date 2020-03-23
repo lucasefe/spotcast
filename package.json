@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsc && mocha"
+    "test": "tsc && mocha",
+    "lint": "eslint src/**/*.ts --fix"
   },
   "author": "",
   "license": "ISC",
@@ -27,7 +28,10 @@
     "@types/socket.io": "^2.1.4",
     "@types/socket.io-client": "^1.4.32",
     "@types/uuid": "^7.0.2",
+    "@typescript-eslint/eslint-plugin": "^2.25.0",
+    "@typescript-eslint/parser": "^2.25.0",
     "chai": "^4.2.0",
+    "eslint": "^6.8.0",
     "jasmine": "^3.5.0",
     "jasmine-core": "^3.5.0",
     "karma": "^4.4.1",
