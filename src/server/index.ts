@@ -1,6 +1,11 @@
 import express from "express";
 import * as http from "http";
 import SocketIO from "socket.io";
+import * as events from "events"
+import * as uuid from 'uuid';
+import { UserConnectedEvent } from '../events';
+import { User } from '../models/user';
+
 
 class Server {
   private sockets: SocketIO.Server;
@@ -13,7 +18,9 @@ class Server {
     this.sockets = SocketIO(this.httpServer) as SocketIO.Server;
 
     this.sockets.on("connection", socket => {
-      socket.emit("hola");
+      const user = new User();
+      const event = new UserConnectedEvent(user)
+      socket.emit(UserConnectedEvent.eventName, event);
     });
   }
 

@@ -11,7 +11,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^2.3.0",
-    "socket.io-client": "^2.3.0"
+    "socket.io-client": "^2.3.0",
+    "uuid": "^7.0.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -24,6 +25,7 @@
     "@types/node": "^13.9.3",
     "@types/socket.io": "^2.1.4",
     "@types/socket.io-client": "^1.4.32",
+    "@types/uuid": "^7.0.2",
     "chai": "^4.2.0",
     "jasmine": "^3.5.0",
     "jasmine-core": "^3.5.0",
