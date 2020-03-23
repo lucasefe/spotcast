@@ -1,3 +1,3 @@
 export class Event {
-  static readonly UserConnected = "user-connected";
+  static readonly UserConnected = 'user-connected';
 }

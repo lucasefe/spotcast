@@ -1,16 +1,11 @@
-import SocketIOClient from "socket.io-client";
-import * as ServerEvents from "../server/events";
-import * as ClientEvents from "./events";
-import * as events from "events";
+import SocketIOClient from 'socket.io-client';
+import * as ServerEvents from '../server/events';
+import * as ClientEvents from './events';
+import * as events from 'events';
 
-enum Statuses {
-  connected = "Connected",
-  disconnected = "Disconnected"
-}
 
 class Client extends events.EventEmitter {
   public userId: string | null;
-  public status: Statuses;
   private socket: SocketIOClient.Socket | null;
   private url: string;
 
@@ -18,7 +13,6 @@ class Client extends events.EventEmitter {
     super();
 
     this.url = url;
-    this.status = Statuses.disconnected;
     this.socket = null;
     this.userId = null;
   }
@@ -29,11 +23,9 @@ class Client extends events.EventEmitter {
 
       this.socket.on(ServerEvents.UserConnectedEvent.eventName,
         (data: ServerEvents.UserConnectedEvent) => {
-          this.status = Statuses.connected;
-
-          if (this.userId && this.userId !== data.userId) {
+          if (this.userId && this.userId !== data.userId)
             this.emit(ClientEvents.UserConnectedEvent.eventName, data);
-          } else {
+          else {
             this.userId = data.userId;
             this.emit(ClientEvents.ConnectedEvent.eventName, data);
           }

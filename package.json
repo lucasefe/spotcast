@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "tsc && mocha",
-    "lint": "eslint src/**/*.ts --fix"
+    "lint": "eslint src/**/*.ts test/**/*.js --fix"
   },
   "author": "",
   "license": "ISC",
