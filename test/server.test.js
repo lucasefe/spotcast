@@ -14,8 +14,9 @@ describe("Server", () => {
       await server.listen(3000)
     })
 
-    before(function connectToServer(done  ) {
-      client = new Client("http://localhost:3000", done)
+    before(async function connectToServer() {
+      client = new Client("http://localhost:3000")
+      await client.connect();
     })
 
     it("connected", function() {

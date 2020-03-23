@@ -5,16 +5,24 @@ enum Statuses {
   disconnected = "Disconnected"
 }
 
-class Client{
-  private socket: SocketIOClient.Socket;
-  status: Statuses;
+class Client {
+  public status: Statuses;
+  private socket: SocketIOClient.Socket | null;
+  private url: string;
 
   constructor(url: string, done: () => {}) {
+    this.url = url;
     this.status = Statuses.disconnected;
-    this.socket = SocketIOClient(url)
-    this.socket.on('connect', () => {
-      this.status = Statuses.connected;
-      done()
+    this.socket = null;
+  }
+
+  async connect() {
+    return new Promise((resolve) => {
+      this.socket = SocketIOClient(this.url);
+      this.socket.on("connect", () => {
+        this.status = Statuses.connected;
+        resolve();
+      });
     });
   }
 }
