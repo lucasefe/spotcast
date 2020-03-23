@@ -17,8 +17,10 @@ class Server {
     });
   }
 
-  listen(port: Number, callback: () => {}) {
-    this.httpServer.listen(port, callback)
+  async listen(port: Number) {
+    return new Promise((resolve) => {
+      this.httpServer.listen(port, resolve)
+    })
   }
 }
 

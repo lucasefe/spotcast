@@ -9,11 +9,9 @@ describe("Server", () => {
     let server;
     let client;
 
-    before(function createServer(done) {
+    before(async function createServer() {
       server = new Server()
-      server.listen(3000, function() {
-        done()
-      });
+      await server.listen(3000)
     })
 
     before(function connectToServer(done  ) {
