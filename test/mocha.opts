@@ -1,0 +1,4 @@
+--require @babel/register
+--timeout 30000
+--exit
+--check-leaks

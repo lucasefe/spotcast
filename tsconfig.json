@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "moduleResolution": "node",
-        "noImplicitAny": false,
-        "sourceMap": true,
+        "esModuleInterop": true,
         "target": "es6",
-        "outDir": "./dist/server",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "outDir": "./dist",
         "strict": true,
         "removeComments": false,
         "allowSyntheticDefaultImports": true,
