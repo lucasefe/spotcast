@@ -22,5 +22,8 @@ describe("Server", () => {
       assert.equal(client.status, 'Connected')
     });
 
+    after(async function stopServer() {
+      await server.stop();
+    })
   });
 });

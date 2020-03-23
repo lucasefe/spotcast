@@ -18,9 +18,17 @@ class Server {
   }
 
   async listen(port: Number) {
-    return new Promise((resolve) => {
-      this.httpServer.listen(port, resolve)
+    return new Promise((resolve, reject) => {
+      this.httpServer.listen(port)
+      this.httpServer
+        .on('listening', () => resolve(this.httpServer))
+        .on('error', reject);
     })
+  }
+
+  async stop() {
+    this.httpServer.close();
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 }
 

@@ -33,9 +33,18 @@ class Server {
     }
     listen(port) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => {
-                this.httpServer.listen(port, resolve);
+            return new Promise((resolve, reject) => {
+                this.httpServer.listen(port);
+                this.httpServer
+                    .on('listening', () => resolve(this.httpServer))
+                    .on('error', reject);
             });
+        });
+    }
+    stop() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.httpServer.close();
+            yield new Promise(resolve => setTimeout(resolve, 1000));
         });
     }
 }
