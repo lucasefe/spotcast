@@ -21,7 +21,7 @@ describe("Server", () => {
     })
 
     it("connected", function() {
-      assert.equal(client.status, 'connected')
+      assert.equal(client.status, 'Connected')
     });
 
   });

@@ -1,14 +1,19 @@
 import SocketIOClient from "socket.io-client";
 
+enum Statuses {
+  connected = "Connected",
+  disconnected = "Disconnected"
+}
+
 class Client{
   private socket: SocketIOClient.Socket;
-  status: string;
+  status: Statuses;
 
   constructor(url: string, done: () => {}) {
-    this.status = 'disconencted' // should be an enum
+    this.status = Statuses.disconnected;
     this.socket = SocketIOClient(url)
     this.socket.on('connect', () => {
-      this.status = 'connected'
+      this.status = Statuses.connected;
       done()
     });
   }
