@@ -110,7 +110,7 @@ describe('spotcast client -> server api', () => {
       const trackID = '1234';
 
       before(async function addTrackToPlaylist() {
-        client.on('playlist-updated', data => {
+        client.once('playlist-updated', data => {
           playlist = data.playlist;
         });
 
@@ -130,6 +130,23 @@ describe('spotcast client -> server api', () => {
           assert(playlist.tracks[0].userID);
           assert.equal(playlist.tracks[0].userID, client.userID);
         });
+      });
+
+      describe('skip duplicate tracks', function() {
+        let updatedPlaylist;
+
+        before(async function addTrackToPlaylist() {
+          client.once('playlist-updated', data => {
+            updatedPlaylist = data.playlist;
+          });
+
+          await client.addTrackToPlaylist(trackID);
+        });
+
+        it('should skip the update', function() {
+          assert.deepEqual(playlist, updatedPlaylist);
+        });
+
       });
     });
   });

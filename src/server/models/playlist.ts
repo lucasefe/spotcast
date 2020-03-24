@@ -8,6 +8,8 @@ export default class Playlist {
   }
 
   add(track: Track): void {
-    this.tracks.push(track);
+    const alreadyExists = this.tracks.find(t => t.id === track.id);
+    if (!alreadyExists)
+      this.tracks.push(track);
   }
 }
