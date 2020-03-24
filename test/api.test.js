@@ -4,7 +4,7 @@ import Client from '../dist/client';
 import Server from '../dist/server';
 
 
-describe('spotcast api', () => {
+describe('spotcast server -> client api', () => {
   let server;
 
   before(async function createServer() {
@@ -16,14 +16,14 @@ describe('spotcast api', () => {
     let connectedData;
     let client;
 
-    before(function connectToServer(done) {
+    before(async function connectToServer() {
       client = new Client('http://localhost:3000');
       client.on('connected', data => {
         connectedData = data;
-        done();
       });
 
-      client.connect();
+      await client.connect();
+      await Bluebird.delay(200);
     });
 
     describe('connected payload', function() {
