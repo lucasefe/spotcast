@@ -3,6 +3,7 @@ import Playlist from './models/playlist';
 export class Action {
   static readonly AddTrackToPlaylistAction = 'add-track-to-playlist';
   static readonly RemoveTrackFromPlaylistAction = 'remove-track-to-playlist';
+  static readonly ClearPlaylist = 'clear-playlist';
 }
 
 export class AddTrackToPlaylistAction {
@@ -22,4 +23,9 @@ export class RemoveTrackFromPlaylistAction {
   constructor(trackID: string) {
     this.trackID = trackID;
   }
+}
+
+
+export class ClearPlaylist {
+  static readonly actionName: string = Action.ClearPlaylist;
 }

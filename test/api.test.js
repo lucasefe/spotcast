@@ -182,7 +182,28 @@ describe('spotcast client -> server api', () => {
         });
       });
     });
+
+    describe('clear playlist', function() {
+      let playlist;
+
+      before(async function clearPlaylist() {
+        await client.addTrackToPlaylist('5678');
+        await Bluebird.delay(100);
+
+        client.once('playlist-updated', data => {
+          playlist = data.playlist;
+        });
+
+        await client.clearPlaylist();
+      });
+
+      it('should have zero tracks', function() {
+        assert.equal(playlist.tracks.length, 0);
+      });
+
+    });
   });
+
 
   after(Helper.stopServer);
 });

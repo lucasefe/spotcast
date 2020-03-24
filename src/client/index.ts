@@ -94,6 +94,20 @@ class Client extends events.EventEmitter {
       });
     });
   }
+
+  async clearPlaylist(): Promise<Playlist> {
+    return new Promise<Playlist>((resolve, reject) => {
+      if (!this.socket)
+        throw new Error('disconnected!');
+
+      this.socket.emit(ServerActions.ClearPlaylist.actionName, (ack: boolean) => {
+        if (ack === true)
+          resolve();
+        else
+          reject();
+      });
+    });
+  }
 }
 
 export default Client;

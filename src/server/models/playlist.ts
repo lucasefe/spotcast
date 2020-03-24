@@ -18,4 +18,8 @@ export default class Playlist {
     if (index !== -1)
       this.tracks.splice(index, 1);
   }
+
+  clear(): void {
+    this.tracks.splice(0);
+  }
 }
