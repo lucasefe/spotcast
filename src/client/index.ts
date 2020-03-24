@@ -19,7 +19,7 @@ class Client extends events.EventEmitter {
 
   async connect(): Promise<void> {
     return new Promise<void>(resolve => {
-      this.socket = SocketIOClient(this.url);
+      this.socket = SocketIOClient(this.url, { autoConnect: false });
 
       this.socket.on(ServerEvents.UserConnectedEvent.eventName, (data: ServerEvents.UserConnectedEvent) => {
         if (this.userId && this.userId !== data.userId)
@@ -28,9 +28,10 @@ class Client extends events.EventEmitter {
           this.userId = data.userId;
           this.emit(ClientEvents.ConnectedEvent.eventName, data);
         }
-        resolve();
-      }
-      );
+      });
+
+      this.socket.on('connect', () => resolve());
+      this.socket.open();
     });
   }
 

@@ -4,7 +4,7 @@ import Client from '../dist/client';
 import Server from '../dist/server';
 
 
-describe('spotcast server -> client api', () => {
+describe('spotcast client -> server api', () => {
   let server;
 
   before(async function createServer() {
