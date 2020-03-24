@@ -6,7 +6,7 @@ import Playlist           from './playlist';
 import SocketIOClient     from 'socket.io-client';
 
 class Client extends events.EventEmitter {
-  public userId: string | null;
+  public userID: string | null;
   private socket: SocketIOClient.Socket | null;
   private url: string;
 
@@ -15,7 +15,7 @@ class Client extends events.EventEmitter {
 
     this.url = url;
     this.socket = null;
-    this.userId = null;
+    this.userID = null;
   }
 
   async connect(): Promise<void> {
@@ -23,10 +23,10 @@ class Client extends events.EventEmitter {
       this.socket = SocketIOClient(this.url, { autoConnect: false });
 
       this.socket.on(ServerEvents.UserConnectedEvent.eventName, (data: ServerEvents.UserConnectedEvent) => {
-        if (this.userId && this.userId !== data.userId)
+        if (this.userID && this.userID !== data.userID)
           this.emit(ClientEvents.UserConnectedEvent.eventName, data);
         else {
-          this.userId = data.userId;
+          this.userID = data.userID;
           this.emit(ClientEvents.ConnectedEvent.eventName, data);
         }
       });

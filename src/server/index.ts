@@ -1,12 +1,13 @@
 import * as http                    from 'http';
 import { AddTrackToPlaylistAction } from './actions';
-import { Playlist }                 from './models/playlist';
 import { PlaylistRequestedEvent }   from './events';
 import { PlaylistUpdatedEvent }     from './events';
-import { User }                     from './models/user';
 import { UserConnectedEvent }       from './events';
 import { UserDisconnectedEvent }    from './events';
+import Playlist                     from './models/playlist';
 import SocketIO                     from 'socket.io';
+import Track                        from './models/track';
+import User                         from './models/user';
 
 
 class Server {
@@ -31,7 +32,8 @@ class Server {
       });
 
       socket.on(AddTrackToPlaylistAction.actionName, ({ trackID }, ackFn) => {
-        this.playlist.add(trackID);
+        const track = new Track(trackID, user.userID);
+        this.playlist.add(track);
         if (ackFn)
           ackFn(true);
 

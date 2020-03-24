@@ -1,5 +1,5 @@
-import { Playlist } from './models/playlist';
-import { User }     from './models/user';
+import Playlist from './models/playlist';
+import User     from './models/user';
 
 export class Event {
   static readonly UserConnected = 'user-connected';
@@ -10,19 +10,19 @@ export class Event {
 
 export class UserConnectedEvent {
   static readonly eventName: string = Event.UserConnected;
-  public userId: string;
+  public userID: string;
 
   constructor(user: User) {
-    this.userId = user.userId;
+    this.userID = user.userID;
   }
 }
 
 export class UserDisconnectedEvent {
   static readonly eventName: string = Event.UserDisconnected;
-  public userId: string;
+  public userID: string;
 
   constructor(user: User) {
-    this.userId = user.userId;
+    this.userID = user.userID;
   }
 }
 

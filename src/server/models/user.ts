@@ -1,12 +1,12 @@
 import * as SocketIO from 'socket.io';
 import * as uuid     from 'uuid';
 
-export class User {
-  public userId: string;
+export default class User {
+  public userID: string;
   public socket: SocketIO.Socket;
 
   constructor(socket: SocketIO.Socket) {
     this.socket = socket;
-    this.userId = uuid.v4();
+    this.userID = uuid.v4();
   }
 }

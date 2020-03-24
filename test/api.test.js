@@ -22,8 +22,8 @@ describe('spotcast client -> server api', () => {
     });
 
     describe('connected payload', function() {
-      it('includes a userId', function() {
-        assert(connectedData.userId);
+      it('includes a userID', function() {
+        assert(connectedData.userID);
       });
     });
 
@@ -51,9 +51,9 @@ describe('spotcast client -> server api', () => {
 
     describe('another client', function() {
       describe('receiving user-connected event', function() {
-        it('should include the userId of the new client', function() {
-          assert(connectedData.userId);
-          assert.equal(client.userId, connectedData.userId);
+        it('should include the userID of the new client', function() {
+          assert(connectedData.userID);
+          assert.equal(client.userID, connectedData.userID);
         });
       });
     });
@@ -65,9 +65,9 @@ describe('spotcast client -> server api', () => {
 
       describe('another client', function() {
         describe('receiving user-disconnected event', function() {
-          it('should include the userId of the client disconnecting', function() {
-            assert(connectedData.userId);
-            assert.equal(client.userId, connectedData.userId);
+          it('should include the userID of the client disconnecting', function() {
+            assert(connectedData.userID);
+            assert.equal(client.userID, connectedData.userID);
           });
         });
       });
@@ -114,15 +114,21 @@ describe('spotcast client -> server api', () => {
           playlist = data.playlist;
         });
 
-        await client.addTrackToPlaylist({ trackID });
+        await client.addTrackToPlaylist(trackID);
       });
 
       describe('updated playlist', function() {
         it('should have one track', function() {
           assert.equal(playlist.tracks.length, 1);
         });
+
         it('should include the track id', function() {
-          assert.equal(playlist.tracks[0].id);
+          assert.equal(playlist.tracks[0].id, trackID);
+        });
+
+        it('should include the user id of the user who added it', function() {
+          assert(playlist.tracks[0].userID);
+          assert.equal(playlist.tracks[0].userID, client.userID);
         });
       });
     });

@@ -1,11 +1,13 @@
-export class Playlist {
-  public tracks: Array<string>
+import Track from './track';
+
+export default class Playlist {
+  public tracks: Array<Track>
 
   constructor() {
-    this.tracks = new Array<string>();
+    this.tracks = new Array<Track>();
   }
 
-  add(trackID: string): void {
-    this.tracks.push(trackID);
+  add(track: Track): void {
+    this.tracks.push(track);
   }
 }

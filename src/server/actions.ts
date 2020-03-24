@@ -1,4 +1,4 @@
-import { Playlist } from './models/playlist';
+import Playlist from './models/playlist';
 
 export class Action {
   static readonly AddTrackToPlaylistAction = 'add-track-to-playlist';
