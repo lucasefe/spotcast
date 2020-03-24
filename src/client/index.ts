@@ -53,7 +53,7 @@ class Client extends events.EventEmitter {
 
       this.socket.once(ServerEvents.PlaylistRequestedEvent.eventName, (data: ServerEvents.PlaylistRequestedEvent) => {
         if (data.playlist) {
-          const playlist = data.playlist;
+          const playlist = new Playlist(data);
           resolve(playlist);
         } else reject();
       });

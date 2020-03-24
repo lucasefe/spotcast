@@ -1,7 +1,8 @@
 import * as ServerEvents from '../server/events';
 
 export default class Playlist {
+  public items: Array<string>
   constructor(data: ServerEvents.PlaylistRequestedEvent) {
-    console.log({ data });
+    this.items = data.playlist.items;
   }
 }

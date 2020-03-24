@@ -1,16 +1,12 @@
 import { assert } from 'chai';
 import * as Bluebird from 'bluebird';
 import Client from '../dist/client';
-import Server from '../dist/server';
+
+import * as Helper from './helper';
 
 
 describe('spotcast client -> server api', () => {
-  let server;
-
-  before(async function createServer() {
-    server = new Server();
-    await server.listen(3000);
-  });
+  before(Helper.startServer);
 
   describe('client connects', function() {
     let connectedData;
@@ -111,7 +107,5 @@ describe('spotcast client -> server api', () => {
     });
   });
 
-  after(async function stopServer() {
-    await server.stop();
-  });
+  after(Helper.stopServer);
 });

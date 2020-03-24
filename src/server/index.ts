@@ -10,14 +10,10 @@ import { Playlist } from './models/playlist';
 
 class Server {
   private sockets: SocketIO.Server;
-  private httpServer: http.Server;
-  private app: Express.Application;
   private users: Map<string, User>;
 
-  constructor() {
-    this.app = express();
-    this.httpServer = http.createServer(this.app) as http.Server;
-    this.sockets = SocketIO(this.httpServer) as SocketIO.Server;
+  constructor(httpServer: http.Server) {
+    this.sockets = SocketIO(httpServer) as SocketIO.Server;
     this.users = new Map<string, User>();
 
     this.sockets.on('connection', socket => {
@@ -34,20 +30,6 @@ class Server {
       const event = new UserConnectedEvent(user);
       this.sockets.emit(UserConnectedEvent.eventName, event);
     });
-  }
-
-  async listen(port: number): Promise<http.Server> {
-    return new Promise((resolve, reject) => {
-      this.httpServer.listen(port);
-      this.httpServer
-        .on('listening', () => resolve(this.httpServer))
-        .on('error', reject);
-    });
-  }
-
-  async stop(): Promise<void> {
-    this.httpServer.close();
-    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   private connectUser(socket: SocketIO.Socket): User {

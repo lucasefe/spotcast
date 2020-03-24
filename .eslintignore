@@ -1,2 +1,4 @@
 node_modules
 dist
+bin
+test/helper/index.js
