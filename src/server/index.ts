@@ -1,13 +1,14 @@
-import * as http                    from 'http';
-import { AddTrackToPlaylistAction } from './actions';
-import { PlaylistRequestedEvent }   from './events';
-import { PlaylistUpdatedEvent }     from './events';
-import { UserConnectedEvent }       from './events';
-import { UserDisconnectedEvent }    from './events';
-import Playlist                     from './models/playlist';
-import SocketIO                     from 'socket.io';
-import Track                        from './models/track';
-import User                         from './models/user';
+import * as http                         from 'http';
+import { AddTrackToPlaylistAction }      from './actions';
+import { PlaylistRequestedEvent }        from './events';
+import { PlaylistUpdatedEvent }          from './events';
+import { RemoveTrackFromPlaylistAction } from './actions';
+import { UserConnectedEvent }            from './events';
+import { UserDisconnectedEvent }         from './events';
+import Playlist                          from './models/playlist';
+import SocketIO                          from 'socket.io';
+import Track                             from './models/track';
+import User                              from './models/user';
 
 
 class Server {
@@ -34,6 +35,16 @@ class Server {
       socket.on(AddTrackToPlaylistAction.actionName, ({ trackID }, ackFn) => {
         const track = new Track(trackID, user.userID);
         this.playlist.add(track);
+        if (ackFn)
+          ackFn(true);
+
+        socket.emit(PlaylistUpdatedEvent.eventName, new PlaylistUpdatedEvent(this.playlist));
+      });
+
+      socket.on(RemoveTrackFromPlaylistAction.actionName, ({ trackID }, ackFn) => {
+        const track = new Track(trackID, user.userID);
+        this.playlist.remove(track);
+
         if (ackFn)
           ackFn(true);
 

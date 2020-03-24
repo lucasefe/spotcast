@@ -12,4 +12,10 @@ export default class Playlist {
     if (!alreadyExists)
       this.tracks.push(track);
   }
+
+  remove(track: Track): void {
+    const index = this.tracks.findIndex(t => t.id === track.id);
+    if (index !== -1)
+      this.tracks.splice(index, 1);
+  }
 }

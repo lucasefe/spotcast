@@ -149,6 +149,39 @@ describe('spotcast client -> server api', () => {
 
       });
     });
+
+
+    describe('remove title from playlist', function() {
+      let playlist;
+      const trackID = '1234';
+
+      before(async function removeTrackFromPlaylist() {
+        await client.addTrackToPlaylist('5678');
+        await Bluebird.delay(100);
+
+        client.once('playlist-updated', data => {
+          playlist = data.playlist;
+          assert.equal(playlist.tracks.length, 1);
+        });
+
+        await client.removeTrackFromPlaylist(trackID);
+      });
+
+      describe('updated playlist', function() {
+        it('should have one track', function() {
+          assert.equal(playlist.tracks.length, 1);
+        });
+
+        it('should include the track id', function() {
+          assert.equal(playlist.tracks[0].id, '5678');
+        });
+
+        it('should include the user id of the user who added it', function() {
+          assert(playlist.tracks[0].userID);
+          assert.equal(playlist.tracks[0].userID, client.userID);
+        });
+      });
+    });
   });
 
   after(Helper.stopServer);

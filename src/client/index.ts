@@ -80,6 +80,20 @@ class Client extends events.EventEmitter {
       });
     });
   }
+
+  async removeTrackFromPlaylist(trackID: string): Promise<Playlist> {
+    return new Promise<Playlist>((resolve, reject) => {
+      if (!this.socket)
+        throw new Error('disconnected!');
+
+      this.socket.emit(ServerActions.RemoveTrackFromPlaylistAction.actionName, { trackID }, (ack: boolean) => {
+        if (ack === true)
+          resolve();
+        else
+          reject();
+      });
+    });
+  }
 }
 
 export default Client;
