@@ -100,7 +100,29 @@ describe('spotcast client -> server api', () => {
 
       describe('empty playlist', function() {
         it('should be empty', function() {
-          assert.equal(playlist.items.length, 0);
+          assert.equal(playlist.tracks.length, 0);
+        });
+      });
+    });
+
+    describe('add title to playlist', function() {
+      let playlist;
+      const trackID = '1234';
+
+      before(async function addTrackToPlaylist() {
+        client.on('playlist-updated', data => {
+          playlist = data.playlist;
+        });
+
+        await client.addTrackToPlaylist({ trackID });
+      });
+
+      describe('updated playlist', function() {
+        it('should have one track', function() {
+          assert.equal(playlist.tracks.length, 1);
+        });
+        it('should include the track id', function() {
+          assert.equal(playlist.tracks[0].id);
         });
       });
     });

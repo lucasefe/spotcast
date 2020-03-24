@@ -1,8 +1,9 @@
-import * as ClientEvents from './events';
-import * as events       from 'events';
-import * as ServerEvents from '../server/events';
-import Playlist          from './playlist';
-import SocketIOClient    from 'socket.io-client';
+import * as ClientEvents  from './events';
+import * as events        from 'events';
+import * as ServerActions from '../server/actions';
+import * as ServerEvents  from '../server/events';
+import Playlist           from './playlist';
+import SocketIOClient     from 'socket.io-client';
 
 class Client extends events.EventEmitter {
   public userId: string | null;
@@ -28,6 +29,10 @@ class Client extends events.EventEmitter {
           this.userId = data.userId;
           this.emit(ClientEvents.ConnectedEvent.eventName, data);
         }
+      });
+
+      this.socket.on(ServerEvents.PlaylistUpdatedEvent.eventName, (data: ServerEvents.PlaylistUpdatedEvent) => {
+        this.emit(ClientEvents.PlaylistUpdatedEvent.eventName, data);
       });
 
       this.socket.on('connect', () => resolve());
@@ -59,6 +64,20 @@ class Client extends events.EventEmitter {
       });
 
       this.socket.emit(ServerEvents.PlaylistRequestedEvent.eventName);
+    });
+  }
+
+  async addTrackToPlaylist(trackID: string): Promise<Playlist> {
+    return new Promise<Playlist>((resolve, reject) => {
+      if (!this.socket)
+        throw new Error('disconnected!');
+
+      this.socket.emit(ServerActions.AddTrackToPlaylistAction.actionName, { trackID }, (ack: boolean) => {
+        if (ack)
+          resolve();
+        else
+          reject();
+      });
     });
   }
 }

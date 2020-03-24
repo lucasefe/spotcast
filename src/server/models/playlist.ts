@@ -1,7 +1,11 @@
 export class Playlist {
-  public items: Array<string>
+  public tracks: Array<string>
 
   constructor() {
-    this.items = new Array<string>();
+    this.tracks = new Array<string>();
+  }
+
+  add(trackID: string): void {
+    this.tracks.push(trackID);
   }
 }
