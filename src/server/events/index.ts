@@ -1,6 +1,6 @@
-import { Event } from './event';
-import { User } from '../models/user';
+import { Event }    from './event';
 import { Playlist } from '../models/playlist';
+import { User }     from '../models/user';
 
 export class UserConnectedEvent {
   static readonly eventName: string = Event.UserConnected;

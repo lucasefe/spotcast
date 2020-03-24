@@ -1,11 +1,10 @@
-import express from 'express';
-import * as http from 'http';
-import SocketIO from 'socket.io';
-import { UserConnectedEvent } from './events';
-import { UserDisconnectedEvent } from './events';
+import * as http                  from 'http';
+import { Playlist }               from './models/playlist';
 import { PlaylistRequestedEvent } from './events';
-import { User } from './models/user';
-import { Playlist } from './models/playlist';
+import { User }                   from './models/user';
+import { UserConnectedEvent }     from './events';
+import { UserDisconnectedEvent }  from './events';
+import SocketIO                   from 'socket.io';
 
 
 class Server {

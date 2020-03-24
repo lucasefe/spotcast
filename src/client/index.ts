@@ -1,8 +1,8 @@
-import SocketIOClient from 'socket.io-client';
-import Playlist from './playlist';
-import * as ServerEvents from '../server/events';
 import * as ClientEvents from './events';
-import * as events from 'events';
+import * as events       from 'events';
+import * as ServerEvents from '../server/events';
+import Playlist          from './playlist';
+import SocketIOClient    from 'socket.io-client';
 
 class Client extends events.EventEmitter {
   public userId: string | null;

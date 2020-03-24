@@ -9,7 +9,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 10
   },
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "arca", "sort-imports-es6-autofix"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
@@ -106,6 +106,14 @@ module.exports = {
     semi: [2, "always"],
     "semi-spacing": 2,
     "sort-vars": 2,
+    "sort-imports-es6-autofix/sort-imports-es6": [
+      2,
+      {
+        ignoreCase: true,
+        ignoreMemberSort: false,
+        memberSyntaxSortOrder: ["none", "all", "multiple", "single"]
+      }
+    ],
     "space-before-blocks": [2, "always"],
     "space-before-function-paren": [2, "never"],
     "space-in-parens": ["error", "never"],
@@ -114,6 +122,7 @@ module.exports = {
     "spaced-comment": [2, "always"],
     "wrap-iife": 2,
     "valid-jsdoc": 1,
-    yoda: 2
+    yoda: 2,
+    "arca/import-align": 2
   }
 };

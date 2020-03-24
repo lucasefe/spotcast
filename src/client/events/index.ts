@@ -1,4 +1,4 @@
-import { Event } from "./event";
+import { Event } from './event';
 
 export class UserConnectedEvent {
     static readonly eventName: string = Event.UserConnected;

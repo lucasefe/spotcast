@@ -1,7 +1,7 @@
 module.exports = {
   env: {
-    mocha:   true,
-    amd: true
+    mocha: true,
+    amd:   true
   },
   rules: {
     "no-magic-numbers":     0,

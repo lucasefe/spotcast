@@ -1,8 +1,7 @@
-import { assert } from 'chai';
 import * as Bluebird from 'bluebird';
-import Client from '../dist/client';
-
-import * as Helper from './helper';
+import * as Helper   from './helper';
+import { assert }    from 'chai';
+import Client        from '../dist/client';
 
 
 describe('spotcast client -> server api', () => {
