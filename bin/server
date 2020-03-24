@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+const express = require('express');
+const http = require('http');
+const SpotcastServer = require('../dist/server').default;
+
+const app = express();
+const httpServer = http.createServer(app);
+new SpotcastServer(httpServer);
+
+httpServer.listen(3001, function() {
+  console.log('Listening on http://localhost:3001');
+});
