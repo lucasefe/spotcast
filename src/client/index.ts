@@ -73,7 +73,7 @@ class Client extends events.EventEmitter {
         throw new Error('disconnected!');
 
       this.socket.emit(ServerActions.AddTrackToPlaylistAction.actionName, { trackID }, (ack: boolean) => {
-        if (ack)
+        if (ack === true)
           resolve();
         else
           reject();
