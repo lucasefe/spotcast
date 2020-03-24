@@ -18,21 +18,33 @@ class Client extends events.EventEmitter {
   }
 
   async connect(): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       this.socket = SocketIOClient(this.url);
 
-      this.socket.on(ServerEvents.UserConnectedEvent.eventName,
-        (data: ServerEvents.UserConnectedEvent) => {
-          if (this.userId && this.userId !== data.userId)
-            this.emit(ClientEvents.UserConnectedEvent.eventName, data);
-          else {
-            this.userId = data.userId;
-            this.emit(ClientEvents.ConnectedEvent.eventName, data);
-          }
-          resolve();
+      this.socket.on(ServerEvents.UserConnectedEvent.eventName, (data: ServerEvents.UserConnectedEvent) => {
+        if (this.userId && this.userId !== data.userId)
+          this.emit(ClientEvents.UserConnectedEvent.eventName, data);
+        else {
+          this.userId = data.userId;
+          this.emit(ClientEvents.ConnectedEvent.eventName, data);
         }
+        resolve();
+      }
       );
     });
+  }
+
+  async disconnect(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (this.socket) {
+        this.socket.on('disconnect', () => {
+          resolve();
+        });
+        this.socket.close();
+      } else
+        reject();
+    });
+
   }
 }
 

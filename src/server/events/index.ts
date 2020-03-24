@@ -9,3 +9,12 @@ export class UserConnectedEvent {
       this.userId = user.userId;
     }
 }
+
+export class UserDisconnectedEvent {
+    static readonly eventName: string = Event.UserDisconnected;
+    public userId: string;
+
+    constructor(user: User) {
+      this.userId = user.userId;
+    }
+}

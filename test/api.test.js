@@ -31,6 +31,10 @@ describe('spotcast server -> client api', () => {
         assert(connectedData.userId);
       });
     });
+
+    after(async function disconnectClient() {
+      await client.disconnect();
+    });
   });
 
   describe('client connects to server when another client is also connected', function() {
@@ -57,6 +61,25 @@ describe('spotcast server -> client api', () => {
           assert.equal(client.userId, connectedData.userId);
         });
       });
+    });
+
+    describe('when client disconnects', function() {
+      after(async function disconnectClient() {
+        await client.disconnect();
+      });
+
+      describe('another client', function() {
+        describe('receiving user-disconnected event', function() {
+          it('should include the userId of the client disconnecting', function() {
+            assert(connectedData.userId);
+            assert.equal(client.userId, connectedData.userId);
+          });
+        });
+      });
+    });
+
+    after(async function disconnectClient() {
+      await anotherClient.disconnect();
     });
   });
 
