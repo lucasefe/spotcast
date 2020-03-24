@@ -3,7 +3,9 @@ import * as http from 'http';
 import SocketIO from 'socket.io';
 import { UserConnectedEvent } from './events';
 import { UserDisconnectedEvent } from './events';
+import { PlaylistRequestedEvent } from './events';
 import { User } from './models/user';
+import { Playlist } from './models/playlist';
 
 
 class Server {
@@ -25,10 +27,13 @@ class Server {
         this.sockets.emit(UserDisconnectedEvent.eventName, new UserDisconnectedEvent(user));
       });
 
+      socket.on(PlaylistRequestedEvent.eventName, () => {
+        socket.emit(PlaylistRequestedEvent.eventName, new PlaylistRequestedEvent(new Playlist()));
+      });
+
       const event = new UserConnectedEvent(user);
       this.sockets.emit(UserConnectedEvent.eventName, event);
     });
-
   }
 
   async listen(port: number): Promise<http.Server> {

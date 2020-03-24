@@ -12,7 +12,7 @@ describe('spotcast client -> server api', () => {
     await server.listen(3000);
   });
 
-  describe('client connects to server', function() {
+  describe('client connects', function() {
     let connectedData;
     let client;
 
@@ -37,7 +37,7 @@ describe('spotcast client -> server api', () => {
     });
   });
 
-  describe('client connects to server when another client is also connected', function() {
+  describe('client connects when another client is also connected', function() {
     let anotherClient;
     let client;
     let connectedData;
@@ -80,6 +80,34 @@ describe('spotcast client -> server api', () => {
 
     after(async function disconnectClient() {
       await anotherClient.disconnect();
+    });
+  });
+
+  describe('playlist', function() {
+    let client;
+    let anotherClient;
+
+    before(async function connectToServer() {
+      anotherClient = new Client('http://localhost:3000');
+      await anotherClient.connect();
+
+      client = new Client('http://localhost:3000');
+      await client.connect();
+    });
+
+
+    describe('get playlist', function() {
+      let playlist;
+
+      before(async function getPlaylist() {
+        playlist = await client.getPlaylist();
+      });
+
+      describe('empty playlist', function() {
+        it('should be empty', function() {
+          assert.equal(playlist.items.length, 0);
+        });
+      });
     });
   });
 

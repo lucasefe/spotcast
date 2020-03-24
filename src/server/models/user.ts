@@ -1,5 +1,5 @@
-import * as uuid from "uuid"
-import * as SocketIO from "socket.io";
+import * as uuid from 'uuid';
+import * as SocketIO from 'socket.io';
 
 export class User {
   public userId: string;
