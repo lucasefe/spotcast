@@ -4,7 +4,7 @@ import { assert }    from 'chai';
 import Client        from '../dist/client';
 
 
-describe('spotcast client -> server api', () => {
+describe('fogon client -> server api', () => {
   before(Helper.startServer);
 
   describe('client connects', function() {

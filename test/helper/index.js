@@ -3,7 +3,7 @@ const http = require('http');
 const express = require('express');
 
 let app;    // express server
-let server; // spotcast server
+let server; // fogon server
 
 module.exports = {
   async startServer() {
