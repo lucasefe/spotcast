@@ -1,12 +1,8 @@
 #!/usr/bin/env node
-const express = require('express');
-const http = require('http');
-const FogonServer = require('../dist/server').default;
 
-const app = express();
-const httpServer = http.createServer(app);
-new FogonServer(httpServer);
+const configureServer = require('../dist/server').default
+const server = configureServer();
 
-httpServer.listen(3001, function() {
+server.listen(3001, function() {
   console.log('Listening on http://localhost:3001');
 });
