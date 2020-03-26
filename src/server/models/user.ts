@@ -19,7 +19,7 @@ const UserSchema = new Schema({
   accessToken:            { type: String, required: true },
   refreshToken:           { type: String, required: true },
   expiresIn:              { type: Number, required: true },
-  accessTokenRefreshedAt: { type: Date, required: true }
+  accessTokenRefreshedAt: { type: Date }
 
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
