@@ -1,12 +1,24 @@
-import * as SocketIO from 'socket.io';
-import * as uuid     from 'uuid';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export default class User {
-  public userID: string;
-  public socket: SocketIO.Socket;
+interface User extends Document {
+  name?: string;
+  username: string;
+  photoURL?: string;
 
-  constructor(socket: SocketIO.Socket) {
-    this.socket = socket;
-    this.userID = uuid.v4();
-  }
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 }
+
+const UserSchema = new Schema({
+  name:         { type: String },
+  username:     { type: String, required: true },
+  photoURL:     { type: String },
+
+  accessToken:  { type: String, required: true },
+  refreshToken: { type: String, required: true },
+  expiresIn:    { type: Number, required: true }
+
+}, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
+
+export default mongoose.model<User>('User', UserSchema);

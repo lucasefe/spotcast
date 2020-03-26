@@ -9,7 +9,7 @@ import mongoose                                   from 'mongoose';
 import passport                                   from 'passport';
 import PassportSpotify                            from 'passport-spotify';
 import session                                    from 'express-session';
-import User                                       from './user';
+import User                                       from './models/user';
 
 const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
 const clientSecret = '76c34e6e20f4410685724966258e03ee';
