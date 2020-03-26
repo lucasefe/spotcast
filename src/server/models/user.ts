@@ -8,6 +8,7 @@ interface User extends Document {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  accessTokenRefreshedAt: Date;
 }
 
 const UserSchema = new Schema({
@@ -15,9 +16,10 @@ const UserSchema = new Schema({
   username:     { type: String, required: true },
   photoURL:     { type: String },
 
-  accessToken:  { type: String, required: true },
-  refreshToken: { type: String, required: true },
-  expiresIn:    { type: Number, required: true }
+  accessToken:            { type: String, required: true },
+  refreshToken:           { type: String, required: true },
+  expiresIn:              { type: Number, required: true },
+  accessTokenRefreshedAt: { type: Date, required: true }
 
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
