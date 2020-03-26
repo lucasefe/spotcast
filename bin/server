@@ -3,6 +3,6 @@
 const configureServer = require('../dist/server').default
 const server = configureServer();
 
-server.listen(3001, function() {
-  console.log('Listening on http://localhost:3001');
+server.listen(3000, function() {
+  console.log('Listening on http://localhost:3000');
 });
