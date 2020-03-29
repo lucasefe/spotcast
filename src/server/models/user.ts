@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-interface User extends Document {
+export interface UserModel extends Document {
   name?: string;
   username: string;
   photoURL?: string;
@@ -23,4 +23,4 @@ const UserSchema = new Schema({
 
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
-export default mongoose.model<User>('User', UserSchema);
+export default mongoose.model<UserModel>('User', UserSchema);

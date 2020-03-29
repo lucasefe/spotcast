@@ -4,8 +4,9 @@ import passport         from 'passport';
 import PassportSpotify  from 'passport-spotify';
 import User             from './models/user';
 
-const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
-const clientSecret = '76c34e6e20f4410685724966258e03ee';
+export const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
+export const  clientSecret = '76c34e6e20f4410685724966258e03ee';
+
 const callbackURL =  'http://localhost:3000/login/callback';
 const debug = Debug('auth');
 
@@ -35,40 +36,42 @@ const spotifyScopes   = [
 ];
 
 passport.use(spotifyStrategy);
+
+
 passport.serializeUser<any, any>((user, done) => {
+  debug(`Serialized user: ${user.id}`);
   done(null, user.id);
 });
+
 
 passport.deserializeUser((id, done) => {
   if (typeof id === 'string') {
     User.findOne({ username: id }, function(err, user) {
-      if (user) done(null, user);
-      else done(err);
+      if (user) {
+        debug(`Deserialized user: ${user.username}`);
+        done(null, user);
+      } else
+        done(err);
     });
   } else
     done(new Error(`Expected id to be a string when serializing: ${id}`));
 });
 
-const auth = express();
+export const routes = express();
 
-auth.get('/login', passport.authenticate('spotify', {
-  scope:      spotifyScopes,
-  showDialog: true
-}),
-function() {}
-);
+routes.get('/login', passport.authenticate('spotify', { scope: spotifyScopes, showDialog: true }), function() {});
 
-auth.get('/login/callback', passport.authenticate('spotify', { failureRedirect: '/' }), function(req, res) {
+routes.get('/login/callback', passport.authenticate('spotify', { failureRedirect: '/' }), function(req, res) {
   res.redirect('/app');
 });
 
-export function secured(req, res, next): void{
+
+export function secured(req, res, next): void {
   if (req.user)
     next();
   else {
     req.session.returnTo = req.originalUrl;/* eslint-disable-line no-param-reassign */
-    res.redirect('/auth');
+    res.redirect('/login');
   }
 }
 
-export default auth;

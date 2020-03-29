@@ -1,18 +1,35 @@
-import * as http                                  from 'http';
-import { default as connectMongoDBSession }       from 'connect-mongodb-session';
-import { secured }                                from './auth';
-import auth                                       from './auth';
-import bodyParser                                 from 'body-parser';
-import cookieParser                               from 'cookie-parser';
-import cors                                       from 'cors';
-import EJS                                        from 'ejs';
-import express                                    from 'express';
-import mongoose                                   from 'mongoose';
-import passport                                   from 'passport';
-import session                                    from 'express-session';
+import * as auth                                         from './auth';
+import * as http                                         from 'http';
+import * as spotify                                      from './spotify';
+import { default as connectMongoDBSession }              from 'connect-mongodb-session';
+import { secured }                                       from './auth';
+import { UserModel }                                     from './models/user';
+import bodyParser                                        from 'body-parser';
+import cookieParser                                      from 'cookie-parser';
+import cors                                              from 'cors';
+import EJS                                               from 'ejs';
+import express                                           from 'express';
+import mongoose                                          from 'mongoose';
+import passport                                          from 'passport';
+import session                                           from 'express-session';
+import User                                              from './models/user';
 
 /* eslint-disable max-params */
 /* eslint-disable camelcase */
+
+require('../../lib/router_with_promises');
+
+async function updateUser(username): Promise<UserModel | null> {
+  const user = await User.findOne({ username });
+  if (user) {
+    const { accessToken, expiresIn } = await spotify.getAccessToken(user);
+    user.set({ accessToken, expiresIn, accessTokenRefreshedAt: Date.now() });
+    await user.save();
+    return user;
+  } else
+    return null;
+}
+
 
 export default function configureServer(): http.Server {
   mongoose.connect('mongodb://localhost:27017/fogon', {
@@ -31,7 +48,7 @@ export default function configureServer(): http.Server {
 
   app.use(session({
     name:              'fogon.session',
-    secret:            'cats',
+    secret:            'cats', // TODO: replace secret
     proxy:             true,
     resave:            false,
     saveUninitialized: false,
@@ -45,13 +62,14 @@ export default function configureServer(): http.Server {
   app.engine('ejs', EJS.renderFile);
   app.set('view engine', 'ejs');
 
-  app.use(auth);
+  app.use(auth.routes);
 
-  app.get('/app', secured, function(req, res) {
-    res.render('app', { user: req.user });
+  app.get('/app', secured, async function(req, res) {
+    const user: any = req.user;
+    const updatedUser = await updateUser(user.username);
+    res.render('app', { user: updatedUser });
   });
 
   const httpServer = http.createServer(app);
   return httpServer;
 }
-

@@ -17,11 +17,12 @@
         ]
     },
     "include": [
-        "src/**/*"
+        "src/**/*", "lib/router_with_promises.js"
     ],
     "exclude": [
         "bin",
         "dist",
+        "lib",
         "node_modules",
         "types"
     ]
