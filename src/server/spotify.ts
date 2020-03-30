@@ -23,10 +23,12 @@ export async function getAccessToken({ refreshToken }: GetAccessTokenResponse): 
     }
   };
 
+  /* eslint-disable @typescript-eslint/camelcase  */
   const data = qs.stringify({
     grant_type:    'refresh_token',
     refresh_token: refreshToken
   });
+  /* eslint-enable @typescript-eslint/camelcase  */
 
   const response = await axios.post(
     'https://accounts.spotify.com/api/token',

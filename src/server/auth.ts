@@ -1,8 +1,9 @@
-import Debug            from 'debug';
-import express          from 'express';
-import passport         from 'passport';
-import PassportSpotify  from 'passport-spotify';
-import User             from './models/user';
+/* eslint-disable @typescript-eslint/no-use-before-define */
+import Debug                           from 'debug';
+import express                         from 'express';
+import passport                        from 'passport';
+import PassportSpotify                 from 'passport-spotify';
+import User, { UserModel }             from './models/user';
 
 export const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
 export const  clientSecret = '76c34e6e20f4410685724966258e03ee';
@@ -12,21 +13,33 @@ const debug       = Debug('auth');
 
 /* eslint-disable max-params */
 
+async function findOrInitializeUser(username): Promise<UserModel> {
+  const user = await User.findOne({ username });
+  if (user)
+    return user;
+  else
+    return new User({ username });
+}
+
+
 const SpotifyStrategy = PassportSpotify.Strategy;
 const spotifyStrategy = new SpotifyStrategy({ clientID, clientSecret, callbackURL },
   function onSuccessAuth(accessToken, refreshToken, expiresIn, profile, done): void{
-    const id       = profile.id;
     const photoURL = profile.photos && profile.photos[0];
-    const username = profile.id;
     const name     = profile.displayName;
-    const user     = new User({ username, name, photoURL, accessToken, refreshToken, expiresIn });
 
-    user.save(() => {
-      debug(`User created from Spotify profile: ${JSON.stringify(profile)}`);
-      done(null, { id });
-    });
+    findOrInitializeUser(profile.id)
+      .then(user => {
+        const verb = user.isNew ? 'created' : 'updated';
+        debug(`User ${verb} Spotify profile: ${JSON.stringify(profile)}`);
+        user.set({ name, photoURL, accessToken, refreshToken, expiresIn });
+        return user.save();
+      }).then(() => {
+        done(null, { id: profile.id });
+      });
   }
 );
+
 
 const spotifyScopes = [
   'user-read-email',

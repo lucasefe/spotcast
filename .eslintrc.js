@@ -22,7 +22,6 @@ module.exports = {
         "arrow-spacing": 2,
         "block-spacing": 2,
         "brace-style": 2,
-        camelcase: 2,
         "comma-dangle": ["error", "never"],
         "comma-spacing": [2, { before: false, after: true }],
         "comma-style": [2, "last"],
