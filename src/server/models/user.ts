@@ -1,51 +1,5 @@
+import { CurrentPlayer }              from '../spotify';
 import mongoose, { Document, Schema } from 'mongoose';
-
-export interface Album {
-  id: string;
-  name: string;
-  type: string;
-  uri: string;
-  href: string;
-}
-
-export interface Artist{
-  id: string;
-  name: string;
-  type: string;
-  uri: string;
-  href: string;
-}
-
-export interface Item {
-  id: string;
-  type: string;
-  uri: string;
-
-  album: Album;
-  artists: [Array<Artist>];
-  disc_number: number;
-  duration_ms: number;
-  explicit: false;
-  external_ids: [Record<string, any>];
-  external_urls: [Record<string, any>];
-  href: string;
-  is_local: boolean;
-  popularity: number;
-  preview_url: string;
-  track_number: number;
-}
-
-export interface CurrentPlayer {
-  device: Record<string, any>;
-  shuffleState: boolean;
-  repeatState: string;
-  timestamp: number;
-  context: Record<string, any>;
-  progressMS: number;
-  item: Item;
-  currentlyPlayingType: string;
-  isPlaying: boolean;
-}
 
 
 export interface UserModel extends Document {
@@ -60,7 +14,6 @@ export interface UserModel extends Document {
 
   currentPlayer?: CurrentPlayer;
 }
-
 
 
 const UserSchema = new Schema({

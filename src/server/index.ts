@@ -53,6 +53,11 @@ export default function configureServer(): http.Server {
 
   app.get('/app', secured, async function(req, res) {
     const user: any = req.user;
+    res.redirect(`/f/${user.username}`);
+  });
+
+  app.get('/f/:username', secured, async function(req, res) {
+    const user: any = req.user;
 
     const updatedUser = await updateUser(user.username);
     res.render('app', { user: updatedUser });
@@ -84,7 +89,7 @@ async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| nu
     if (isUnauthorized) {
       const { accessToken } = await spotify.getAccessToken({ refreshToken: user.refreshToken });
       const currentPlayer   = await spotify.getCurrentPlayer({ accessToken });
-      user.set({ currentPlayer, accessTokenRefreshedAt: Date.now() });
+      user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
       await user.save();
       return currentPlayer;
     } else
