@@ -10,9 +10,12 @@ import cors                                 from 'cors';
 import EJS                                  from 'ejs';
 import express                              from 'express';
 import mongoose                             from 'mongoose';
+import morgan                               from 'morgan';
 import passport                             from 'passport';
 import session                              from 'express-session';
 import User                                 from './models/user';
+
+
 
 /* eslint-disable camelcase */
 
@@ -48,6 +51,7 @@ export default function configureServer(): http.Server {
   app.set('views', './views');
   app.engine('ejs', EJS.renderFile);
   app.set('view engine', 'ejs');
+  app.use(morgan('combined'));
 
   app.use(auth.routes);
 
