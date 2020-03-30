@@ -16,6 +16,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended"
     ],
     rules: {
+        "@typescript-eslint/no-use-before-define": 0,
         "align-assignments/align-assignments": [2, { "requiresOnly": false } ],
         "array-bracket-spacing": ["error", "always", { objectsInArrays: false }],
         "arrow-parens": ["error", "as-needed"],
@@ -44,7 +45,7 @@ module.exports = {
         "keyword-spacing": 2,
         "max-depth": [2, 3],
         "max-nested-callbacks": [2, 3],
-        "max-params": [2, 3],
+        "max-params": [2, 6],
         "max-statements": [2, 30],
         "new-cap": [2, { newIsCap: true, capIsNew: false }],
         "new-parens": 2,

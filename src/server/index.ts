@@ -14,7 +14,6 @@ import passport                                          from 'passport';
 import session                                           from 'express-session';
 import User                                              from './models/user';
 
-/* eslint-disable max-params */
 /* eslint-disable camelcase */
 
 require('../../lib/router_with_promises');

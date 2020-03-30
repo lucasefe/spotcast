@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 import Debug                           from 'debug';
 import express                         from 'express';
 import passport                        from 'passport';
@@ -8,18 +7,8 @@ import User, { UserModel }             from './models/user';
 export const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
 export const  clientSecret = '76c34e6e20f4410685724966258e03ee';
 
-const callbackURL =  'http://localhost:3000/login/callback';
+const callbackURL = 'http://localhost:3000/login/callback';
 const debug       = Debug('auth');
-
-/* eslint-disable max-params */
-
-async function findOrInitializeUser(username): Promise<UserModel> {
-  const user = await User.findOne({ username });
-  if (user)
-    return user;
-  else
-    return new User({ username });
-}
 
 
 const SpotifyStrategy = PassportSpotify.Strategy;
@@ -78,6 +67,13 @@ routes.get('/login/callback', passport.authenticate('spotify', { failureRedirect
   res.redirect('/app');
 });
 
+async function findOrInitializeUser(username): Promise<UserModel> {
+  const user = await User.findOne({ username });
+  if (user)
+    return user;
+  else
+    return new User({ username });
+}
 
 export function secured(req, res, next): void {
   if (req.user)
