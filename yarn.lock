@@ -2210,6 +2210,11 @@ escape-string-regexp@1.0.5, escape-string-regexp@^1.0.2, escape-string-regexp@^1
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"
   integrity sha1-G2HAViGQqN/2rjuyzwIAyhMLhtQ=
 
+eslint-plugin-align-assignments@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-align-assignments/-/eslint-plugin-align-assignments-1.1.2.tgz#83e1a8a826d4adf29e82b52d0bb39c88b301b576"
+  integrity sha512-I1ZJgk9EjHfGVU9M2Ex8UkVkkjLL5Y9BS6VNnQHq79eHj2H4/Cgxf36lQSUTLgm2ntB03A2NtF+zg9fyi5vChg==
+
 eslint-plugin-arca@^0.9.5:
   version "0.9.5"
   resolved "https://registry.yarnpkg.com/eslint-plugin-arca/-/eslint-plugin-arca-0.9.5.tgz#69874ab364e9aa284a182df607d302049365a00e"

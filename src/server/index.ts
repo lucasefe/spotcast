@@ -36,9 +36,9 @@ export default function configureServer(): http.Server {
     useNewUrlParser: true
   });
 
-  const app = express();
+  const app        = express();
   const MongoStore = connectMongoDBSession(session);
-  const store = new MongoStore({
+  const store      = new MongoStore({
     uri:        'mongodb://localhost:27017/fogon',
     collection: 'sessions'
   });
@@ -65,7 +65,7 @@ export default function configureServer(): http.Server {
   app.use(auth.routes);
 
   app.get('/app', secured, async function(req, res) {
-    const user: any = req.user;
+    const user: any   = req.user;
     const updatedUser = await updateUser(user.username);
     res.render('app', { user: updatedUser });
   });

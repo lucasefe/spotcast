@@ -9,13 +9,14 @@ module.exports = {
     parserOptions: {
         ecmaVersion: 10
     },
-    plugins: ["@typescript-eslint", "arca", "sort-imports-es6-autofix"],
+    plugins: ["@typescript-eslint", "arca", "sort-imports-es6-autofix", "align-assignments"],
     extends: [
         "eslint:recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended"
     ],
     rules: {
+        "align-assignments/align-assignments": [2, { "requiresOnly": false } ],
         "array-bracket-spacing": ["error", "always", { objectsInArrays: false }],
         "arrow-parens": ["error", "as-needed"],
         "arrow-spacing": 2,
