@@ -18,18 +18,6 @@ import User                                              from './models/user';
 
 require('../../lib/router_with_promises');
 
-async function updateUser(username): Promise<UserModel | null> {
-  const user = await User.findOne({ username });
-  if (user) {
-    const { accessToken, expiresIn } = await spotify.getAccessToken(user);
-    user.set({ accessToken, expiresIn, accessTokenRefreshedAt: Date.now() });
-    await user.save();
-    return user;
-  } else
-    return null;
-}
-
-
 export default function configureServer(): http.Server {
   mongoose.connect('mongodb://localhost:27017/fogon', {
     useNewUrlParser: true
@@ -64,7 +52,8 @@ export default function configureServer(): http.Server {
   app.use(auth.routes);
 
   app.get('/app', secured, async function(req, res) {
-    const user: any   = req.user;
+    const user: any = req.user;
+
     const updatedUser = await updateUser(user.username);
     res.render('app', { user: updatedUser });
   });
@@ -72,3 +61,15 @@ export default function configureServer(): http.Server {
   const httpServer = http.createServer(app);
   return httpServer;
 }
+
+async function updateUser(username): Promise<UserModel | null> {
+  const user = await User.findOne({ username });
+  if (user) {
+    const currentPlayer = await spotify.getCurrentPlayer(user);
+    user.set({ currentPlayer });
+    await user.save();
+    return user;
+  } else
+    return null;
+}
+
