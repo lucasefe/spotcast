@@ -1,18 +1,18 @@
-import * as auth                                         from './auth';
-import * as http                                         from 'http';
-import * as spotify                                      from './spotify';
-import { default as connectMongoDBSession }              from 'connect-mongodb-session';
-import { secured }                                       from './auth';
-import { UserModel }                                     from './models/user';
-import bodyParser                                        from 'body-parser';
-import cookieParser                                      from 'cookie-parser';
-import cors                                              from 'cors';
-import EJS                                               from 'ejs';
-import express                                           from 'express';
-import mongoose                                          from 'mongoose';
-import passport                                          from 'passport';
-import session                                           from 'express-session';
-import User                                              from './models/user';
+import * as auth                            from './auth';
+import * as http                            from 'http';
+import * as spotify                         from './spotify';
+import { default as connectMongoDBSession } from 'connect-mongodb-session';
+import { secured }                          from './auth';
+import { UserModel }                        from './models/user';
+import bodyParser                           from 'body-parser';
+import cookieParser                         from 'cookie-parser';
+import cors                                 from 'cors';
+import EJS                                  from 'ejs';
+import express                              from 'express';
+import mongoose                             from 'mongoose';
+import passport                             from 'passport';
+import session                              from 'express-session';
+import User                                 from './models/user';
 
 /* eslint-disable camelcase */
 
@@ -62,10 +62,11 @@ export default function configureServer(): http.Server {
   return httpServer;
 }
 
+
 async function updateUser(username): Promise<UserModel | null> {
   const user = await User.findOne({ username });
   if (user) {
-    const currentPlayer = await spotify.getCurrentPlayer(user);
+    const currentPlayer = await getCurrentPlayer(user);
     user.set({ currentPlayer });
     await user.save();
     return user;
@@ -73,3 +74,21 @@ async function updateUser(username): Promise<UserModel | null> {
     return null;
 }
 
+
+async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
+  try {
+    const currentPlayer = await spotify.getCurrentPlayer({ accessToken: user.accessToken });
+    return currentPlayer;
+  } catch (error) {
+    const isUnauthorized = error.response && error.response.status === 401;
+    if (isUnauthorized) {
+      const { accessToken } = await spotify.getAccessToken({ refreshToken: user.refreshToken });
+      const currentPlayer   = await spotify.getCurrentPlayer({ accessToken });
+      user.set({ currentPlayer, accessTokenRefreshedAt: Date.now() });
+      await user.save();
+      return currentPlayer;
+    } else
+      throw error;
+  }
+
+}

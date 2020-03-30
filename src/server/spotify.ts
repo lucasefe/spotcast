@@ -16,7 +16,7 @@ interface GetCurrentPlayerParams {
   accessToken: string;
 }
 
-interface CurrentPlayerResponse {
+export interface CurrentPlayerResponse {
   device: Record<string, any>;
   shuffleState: boolean;
   repeatState: string;
