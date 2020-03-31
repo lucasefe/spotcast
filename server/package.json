@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsc && mocha",
-    "watch": "tsc && bin/server",
+    "server": "tsc && bin/run",
     "lint": "eslint src/**/*.ts test/**/*.js --fix"
   },
   "author": "",
