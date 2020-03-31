@@ -2,7 +2,10 @@
 
 const configureServer = require('../dist/server').default
 const server = configureServer();
+const logger = require('../dist/util/logger').default;
+const pjson = require("../package.json");
+const port = ("port", process.env.PORT || 3000);
 
-server.listen(3000, function() {
-  console.log('Listening on http://localhost:3000');
+server.listen(port, function() {
+    logger.info(`${pjson.name} running → PORT ${server.address().port}`);
 });
