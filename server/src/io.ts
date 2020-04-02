@@ -4,6 +4,7 @@ import http from 'http'
 
 
 exports.initialize = function (httpServer: http.Server) {
+  logger.info('initializing socket server')
   const sockets = sio(httpServer) as sio.Server;
   if (sockets) {
     sockets.on('connection', (socket: any) => {

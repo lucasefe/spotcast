@@ -1,20 +1,18 @@
 <template>
-  <v-app>
-    <v-app-bar app color="primary" dark >
-      <v-spacer></v-spacer>
-    </v-app-bar>
-
-    <v-content>
-    </v-content>
-  </v-app>
+    <div class="container">
+      <CurrentlyPlaying/>
+    </div>
 </template>
 
 <script>
+
+import CurrentlyPlaying from "./components/CurrentlyPlaying.vue"
 
 export default {
   name: 'App',
 
   components: {
+    CurrentlyPlaying
   },
 
   data: () => ({

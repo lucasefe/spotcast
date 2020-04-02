@@ -1,11 +1,10 @@
 import Vue from 'vue'
 import App from './App.vue'
-import Vuetify from "vuetify";
-import "vuetify/dist/vuetify.min.css";
 import VueSocketIO from "vue-socket.io";
-import vuetify from './plugins/vuetify';
+import Buefy from 'buefy'
+import 'buefy/dist/buefy.css'
 
-Vue.use(Vuetify);
+Vue.use(Buefy)
 Vue.use(
   new VueSocketIO({
     debug: true,
@@ -16,6 +15,5 @@ Vue.use(
 Vue.config.productionTip = false;
 
 new Vue({
-  vuetify,
   render: h => h(App)
 }).$mount('#app')
