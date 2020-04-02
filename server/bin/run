@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const configureServer = require('../dist/server').default
+const configureServer = require('../dist/index').default
 const server = configureServer();
 const logger = require('../dist/util/logger').default;
 const pjson = require("../package.json");

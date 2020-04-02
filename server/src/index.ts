@@ -19,12 +19,13 @@ import User                                 from './models/user';
 
 /* eslint-disable camelcase */
 
-require('../../lib/router_with_promises');
+require('../lib/router_with_promises');
 
 export default function configureServer(): http.Server {
   mongoose.connect('mongodb://localhost:27017/fogon', {
     useNewUrlParser: true
   });
+
 
   const app        = express();
   const MongoStore = connectMongoDBSession(session);
@@ -68,6 +69,9 @@ export default function configureServer(): http.Server {
   });
 
   const httpServer = http.createServer(app);
+
+  const sockets = require('./io').initialize(httpServer);
+
   return httpServer;
 }
 
