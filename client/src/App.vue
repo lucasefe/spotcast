@@ -1,5 +1,6 @@
 <template>
     <div class="container">
+      <a href="/login">Login</a>
       <CurrentlyPlaying/>
     </div>
 </template>

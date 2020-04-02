@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "server": "tsc && bin/run",
-    "lint": "eslint src/**/*.ts test/**/*.js --fix"
+    "watch": "tsc && bin/run"
   },
   "author": "",
   "license": "ISC",

@@ -5,12 +5,7 @@ import Buefy from 'buefy'
 import 'buefy/dist/buefy.css'
 
 Vue.use(Buefy)
-Vue.use(
-  new VueSocketIO({
-    debug: true,
-    connection: "http://localhost:3000"
-  })
-);
+Vue.use(new VueSocketIO({ debug: true, connection: "/" }));
 
 Vue.config.productionTip = false;
 

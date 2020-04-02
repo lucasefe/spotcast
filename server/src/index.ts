@@ -26,14 +26,13 @@ export default function configureServer(): http.Server {
     useNewUrlParser: true
   });
 
-
   const app        = express();
   const MongoStore = connectMongoDBSession(session);
   const store      = new MongoStore({
     uri:        'mongodb://localhost:27017/fogon',
     collection: 'sessions'
   });
-  app.use(express.static(`${__dirname  }/../../public`));
+  app.use(express.static(`${__dirname  }/../public`));
   app.use(cors());
   app.use(cookieParser());
 
@@ -49,29 +48,21 @@ export default function configureServer(): http.Server {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(passport.initialize());
   app.use(passport.session());
-  app.set('views', './views');
-  app.engine('ejs', EJS.renderFile);
-  app.set('view engine', 'ejs');
+  app.set("views", "./views");
+  app.engine("ejs", EJS.renderFile);
+  app.set("view engine", "ejs");
   app.use(morgan('combined'));
 
   app.use(auth.routes);
 
-  app.get('/app', secured, async function(req, res) {
+  app.get('/me', secured, async function(req, res) {
     const user: any = req.user;
-    res.redirect(`/f/${user.username}`);
-  });
-
-  app.get('/f/:username', secured, async function(req, res) {
-    const user: any = req.user;
-
     const updatedUser = await updateUser(user.username);
-    res.render('app', { user: updatedUser });
+    res.json({ me: updatedUser });
   });
 
   const httpServer = http.createServer(app);
-
   const sockets = require('./io').initialize(httpServer);
-
   return httpServer;
 }
 

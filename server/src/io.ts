@@ -9,6 +9,7 @@ exports.initialize = function (httpServer: http.Server) {
   if (sockets) {
     sockets.on('connection', (socket: any) => {
       logger.debug(`A user connected with ${socket.id}`);
+      socket.emit("PLAYLIST_UPDATED", { currentSong: "connected" });
     })
   }
 

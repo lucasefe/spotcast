@@ -64,7 +64,7 @@ export const routes = express();
 routes.get('/login', passport.authenticate('spotify', { scope: spotifyScopes, showDialog: true }), function() {});
 
 routes.get('/login/callback', passport.authenticate('spotify', { failureRedirect: '/' }), function(req, res) {
-  res.redirect('/f');
+  res.redirect('/');
 });
 
 async function findOrInitializeUser(username): Promise<UserModel> {
