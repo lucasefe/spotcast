@@ -3,6 +3,7 @@ import App from './App.vue'
 import Vuetify from "vuetify";
 import "vuetify/dist/vuetify.min.css";
 import VueSocketIO from "vue-socket.io";
+import vuetify from './plugins/vuetify';
 
 Vue.use(Vuetify);
 Vue.use(
@@ -15,5 +16,6 @@ Vue.use(
 Vue.config.productionTip = false;
 
 new Vue({
-  render: h => h(App),
+  vuetify,
+  render: h => h(App)
 }).$mount('#app')
