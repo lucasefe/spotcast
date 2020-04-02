@@ -15,8 +15,6 @@ import passport                             from 'passport';
 import session                              from 'express-session';
 import User                                 from './models/user';
 
-
-
 /* eslint-disable camelcase */
 
 require('../lib/router_with_promises');
@@ -37,6 +35,7 @@ export default function configureServer(): http.Server {
   app.use(cookieParser());
 
   app.use(session({
+    key:               'fogon.session',
     name:              'fogon.session',
     secret:            'cats', // TODO: replace secret
     proxy:             true,
@@ -48,21 +47,21 @@ export default function configureServer(): http.Server {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(passport.initialize());
   app.use(passport.session());
-  app.set("views", "./views");
-  app.engine("ejs", EJS.renderFile);
-  app.set("view engine", "ejs");
+  app.set('views', './views');
+  app.engine('ejs', EJS.renderFile);
+  app.set('view engine', 'ejs');
   app.use(morgan('combined'));
 
   app.use(auth.routes);
 
   app.get('/me', secured, async function(req, res) {
-    const user: any = req.user;
+    const user: any   = req.user;
     const updatedUser = await updateUser(user.username);
     res.json({ me: updatedUser });
   });
 
   const httpServer = http.createServer(app);
-  const sockets = require('./io').initialize(httpServer);
+  const sockets    = require('./io').initialize(httpServer);
   return httpServer;
 }
 

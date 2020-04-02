@@ -7,7 +7,7 @@ const alignColorsAndTime = winston.format.combine(
 );
 
 const consoleLogger = new winston.transports.Console({
-  level: 'debug',
+  level:  'debug',
   format: winston.format.combine(winston.format.colorize(), alignColorsAndTime)
 });
 
