@@ -1,13 +1,13 @@
 <template>
   <div v-if="item">
     <div class="card">
-      <div class="card-image">
-        <figure class="image is-4by3">
-          <img v-bind:src="albumCover().url" v-bind:width="albumCover().width" v-bind:height="albumCover().height">
-        </figure>
-      </div>
       <div class="card-content">
         <div class="media">
+          <div class="media-left">
+            <figure class="image is-48x48">
+              <img v-bind:src="albumCover().url" class="is-128x128">
+            </figure>
+          </div>
           <div class="media-content">
             <p class="title is-4"> {{ songName() }}</p>
             <p class="subtitle is-6"> {{ artistName() }}</p>
@@ -32,7 +32,7 @@
 
     data: () => ({
       item: '',
-      progressMS: ''
+      progressMS: '',
     }),
 
     methods: {

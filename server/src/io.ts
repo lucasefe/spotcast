@@ -19,6 +19,7 @@ const store      = new MongoStore({
 interface Session {
   socket: sio.Socket;
   user?: UserModel;
+  room?: string;
 }
 
 const sessions = new Map<string, Session>();
@@ -75,10 +76,9 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
       if (socket.request.user && socket.request.user.logged_in) {
         const { user } = socket.request;
         const profile  = userToProfile(user);
+        session.user   = user;
 
-        session.user = user;
-
-        logger.debug(`USER CONNECTED ${user.name}`);
+        logger.debug(`User ${user.username} connected.`);
         socket.emit('PROFILE_UPDATED', { profile });
       }
 
@@ -86,12 +86,60 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         logger.debug(`Socket id destroyed: ${socket.id}`);
         if (session.user) {
           const user = session.user;
-          logger.debug(`USER DISCONNECTED ${user.name}`);
+
+          if (session.room) {
+            const room = session.room;
+            socket.leave(room);
+
+            sockets.in(room).clients(function(error, clients) {
+              if (error)
+                throw error;
+
+              const members = getMembers(clients);
+              socket.emit('MEMBERS_UPDATED', { members });
+            });
+
+            logger.debug(`User ${user.username} left ${room}.`);
+          }
+          logger.debug(`User ${user.username} disconnected`);
         }
 
         sessions.delete(socket.id);
       });
+
+      socket.on('JOIN', function({ room }) {
+        if (session.user) {
+
+          if (!room)
+            return;
+
+          const user          = session.user;
+          const alreadyInRoom = session.room && session.room === room;
+          if (alreadyInRoom) {
+            logger.debug(`User ${user.username} already in room ${room}. `);
+            return;
+          }
+
+          if (session.room) {
+            logger.debug(`User ${user.username} left room ${session.room}`);
+            socket.leave(session.room);
+          }
+
+          logger.debug(`User ${user.username} joined room ${room}`);
+          session.room = room;
+
+          socket.join(room);
+          sockets.in(room).clients(function(error, clients) {
+            if (error)
+              throw error;
+
+            const members = getMembers(clients);
+            socket.emit('MEMBERS_UPDATED', { members });
+          });
+        }
+      });
     });
+
 
     setInterval(function() {
       const userSessions = Array.from(sessions, ([ _, value ]) => value).filter(s => s.user);
@@ -99,12 +147,12 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         return;
 
       logger.debug(`Refreshing users and updating players: ${userSessions.length}`);
-      userSessions.map(({ socket, user }) => {
+      userSessions.map(({ user, room }) => {
         if (user) {
           updateUser(user.username).then(u => {
-            if (u) {
+            if (u && room === user.username) {
               const player = u.currentPlayer;
-              socket.emit('PLAYER_UPDATED', player);
+              sockets.in(room).emit('PLAYER_UPDATED', player);
             }
           });
         }
@@ -141,3 +189,12 @@ function getSession(socket: sio.Socket): Session {
   return newSession;
 }
 
+function getMembers(clients): Array<ProfileResponse> {
+  return clients.map(client => {
+    const userSession = sessions.get(client);
+    if (userSession && userSession.user)
+      return userToProfile(userSession.user);
+    else
+      return null;
+  }).filter(Boolean);
+}

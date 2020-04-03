@@ -44,7 +44,7 @@ module.exports = {
         ],
         "keyword-spacing": 2,
         "max-depth": [2, 3],
-        "max-nested-callbacks": [2, 3],
+        "max-nested-callbacks": [2, 7],
         "max-params": [2, 6],
         "max-statements": [2, 30],
         "new-cap": [2, { newIsCap: true, capIsNew: false }],

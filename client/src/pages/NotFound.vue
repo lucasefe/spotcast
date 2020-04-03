@@ -1,9 +1,11 @@
 <template>
-  <router-view></router-view>
+  <div class="container">
+    Oops, not found
+  </div>
 </template>
 
 <script>
+
 export default {
-  name: "Fogón"
 };
 </script>
