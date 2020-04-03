@@ -90,16 +90,9 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           if (session.room) {
             const room = session.room;
             socket.leave(room);
-
-            sockets.in(room).clients(function(error, clients) {
-              if (error)
-                throw error;
-
-              const members = getMembers(clients);
-              socket.emit('MEMBERS_UPDATED', { members });
-            });
-
             logger.debug(`User ${user.username} left ${room}.`);
+            emitMembersUpdated(room, sockets);
+
           }
           logger.debug(`User ${user.username} disconnected`);
         }
@@ -129,13 +122,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           session.room = room;
 
           socket.join(room);
-          sockets.in(room).clients(function(error, clients) {
-            if (error)
-              throw error;
-
-            const members = getMembers(clients);
-            socket.emit('MEMBERS_UPDATED', { members });
-          });
+          emitMembersUpdated(room, sockets);
         }
       });
     });
@@ -197,4 +184,14 @@ function getMembers(clients): Array<ProfileResponse> {
     else
       return null;
   }).filter(Boolean);
+}
+
+function emitMembersUpdated(room, sockets): void {
+  sockets.in(room).clients(function(error, clients) {
+    if (error)
+      throw error;
+
+    const members = getMembers(clients);
+    sockets.in(room).emit('MEMBERS_UPDATED', { members });
+  });
 }

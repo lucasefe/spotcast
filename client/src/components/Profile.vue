@@ -1,6 +1,6 @@
 <template>
   <div v-if="username">
-    Logged in as <p>{{name}} ({{username}})</p>
+    Logged in as {{name}} ({{username}})
   </div>
   <div v-else>
     <a href="/login">Login with Spotify</a>
