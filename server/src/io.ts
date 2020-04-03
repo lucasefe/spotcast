@@ -1,21 +1,27 @@
-import { default as connectMongoDBSession } from 'connect-mongodb-session';
-import { updateUser }                       from './models/user';
-import cookieParser                         from 'cookie-parser';
-import http                                 from 'http';
-import logger                               from './util/logger';
-import ms                                   from 'ms';
-import passport                             from 'passport';
-import passportSocketIo                     from 'passport.socketio';
-import session                              from 'express-session';
-import sio                                  from 'socket.io';
+import { default as connectMongoDBSession }                  from 'connect-mongodb-session';
+import { updateUser }                                        from './models/user';
+import { UserModel }                                         from './models/user';
+import cookieParser                                          from 'cookie-parser';
+import expressSession                                        from 'express-session';
+import http                                                  from 'http';
+import logger                                                from './util/logger';
+import ms                                                    from 'ms';
+import passport                                              from 'passport';
+import passportSocketIo                                      from 'passport.socketio';
+import sio                                                   from 'socket.io';
 
-const MongoStore = connectMongoDBSession(session);
+const MongoStore = connectMongoDBSession(expressSession);
 const store      = new MongoStore({
   uri:        'mongodb://localhost:27017/fogon',
   collection: 'sessions'
 });
 
-const users = new Map<string, sio.Socket>();
+interface Session {
+  socket: sio.Socket;
+  user?: UserModel;
+}
+
+const sessions = new Map<string, Session>();
 
 exports.initialize = function(httpServer: http.Server): sio.Server {
   logger.info('initializing socket server');
@@ -63,26 +69,45 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 
   if (sockets) {
     sockets.on('connection', (socket: any) => {
-      logger.debug(`A user connected with ${socket.id}`);
+      logger.debug(`Socket id created: ${socket.id}`);
+      const session = getSession(socket);
 
       if (socket.request.user && socket.request.user.logged_in) {
         const { user } = socket.request;
         const profile  = userToProfile(user);
 
-        users.set(user.username, socket);
+        session.user = user;
+
+        logger.debug(`USER CONNECTED ${user.name}`);
         socket.emit('PROFILE_UPDATED', { profile });
       }
+
+      socket.on('disconnect', function() {
+        logger.debug(`Socket id destroyed: ${socket.id}`);
+        if (session.user) {
+          const user = session.user;
+          logger.debug(`USER DISCONNECTED ${user.name}`);
+        }
+
+        sessions.delete(socket.id);
+      });
     });
 
     setInterval(function() {
-      logger.debug('Refreshing users and updating players');
-      users.forEach((socket, username) => {
-        updateUser(username).then(u => {
-          if (u) {
-            const player = u.currentPlayer;
-            socket.emit('PLAYER_UPDATED', player);
-          }
-        });
+      const userSessions = Array.from(sessions, ([ _, value ]) => value).filter(s => s.user);
+      if (userSessions.length === 0)
+        return;
+
+      logger.debug(`Refreshing users and updating players: ${userSessions.length}`);
+      userSessions.map(({ socket, user }) => {
+        if (user) {
+          updateUser(user.username).then(u => {
+            if (u) {
+              const player = u.currentPlayer;
+              socket.emit('PLAYER_UPDATED', player);
+            }
+          });
+        }
       });
 
     }, ms('2s'));
@@ -105,3 +130,14 @@ function userToProfile(user): ProfileResponse {
     name
   };
 }
+
+function getSession(socket: sio.Socket): Session {
+  const sioSession = sessions.get(socket.id);
+  if (sioSession)
+    return sioSession;
+
+  const newSession = { socket };
+  sessions.set(socket.id, newSession);
+  return newSession;
+}
+
