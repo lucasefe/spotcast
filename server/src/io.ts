@@ -60,14 +60,27 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
   if (sockets) {
     sockets.on('connection', (socket: any) => {
       logger.debug(`A user connected with ${socket.id}`);
-      socket.emit('PLAYLIST_UPDATED', { currentSong: 'connected' });
 
-      if (socket.request.user && socket.request.user.logged_in)
-        logger.debug(socket.request.user);
+      if (socket.request.user && socket.request.user.logged_in) {
+        const profile = userToJSON(socket.request.user);
+        socket.emit('PROFILE_UPDATED', { profile });
+      }
     });
   }
 
-  logger.debug('ssssssssssssssss');
-
   return sockets;
 };
+
+interface ProfileResponse {
+  username: string;
+  name: string;
+}
+
+function userToJSON(user): ProfileResponse {
+  const { username } = user;
+  const { name }     = user;
+  return {
+    username,
+    name
+  };
+}

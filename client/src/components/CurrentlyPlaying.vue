@@ -7,8 +7,6 @@
     sockets: {
       PLAYLIST_UPDATED: function({ currentSong }) {
         this.currentSong = currentSong;
-      },
-      disconnect: function() {
       }
     },
 

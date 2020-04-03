@@ -1,23 +1,24 @@
 <template>
     <div class="container">
-      <a href="/login">Login</a>
-      <CurrentlyPlaying/>
+      <Profile></Profile>
+      <CurrentlyPlaying></CurrentlyPlaying>
     </div>
 </template>
 
 <script>
 
 import CurrentlyPlaying from "./components/CurrentlyPlaying.vue"
+import Profile from "./components/Profile.vue"
 
 export default {
   name: 'App',
-
   components: {
-    CurrentlyPlaying
+    CurrentlyPlaying,
+    Profile
   },
 
   data: () => ({
-    //
+
   }),
 };
 </script>
