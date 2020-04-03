@@ -44,12 +44,17 @@ export default function configureServer(): http.Server {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(passport.initialize());
   app.use(passport.session());
-  app.set('views', './views');
-  app.engine('ejs', EJS.renderFile);
-  app.set('view engine', 'ejs');
+  app.set('views', './public');
   app.use(morgan('combined'));
+  app.engine('html', EJS.renderFile);
+  app.set('view engine', 'html');
 
   app.use(auth.routes);
+
+  app.get('/:username', auth.secured, function(req, res) {
+    console.log(`username is ${req.params.username}`);
+    res.render('index.html');
+  });
 
   const httpServer = http.createServer(app);
 

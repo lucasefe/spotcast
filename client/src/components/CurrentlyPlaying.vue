@@ -13,14 +13,11 @@
             <p class="subtitle is-6"> {{ artistName() }}</p>
           </div>
         </div>
-
         <div class="content">
           <b-progress :value="progress()" type="is-success" size="is-small" format="percent"></b-progress>
         </div>
       </div>
     </div>
-
-
   </div>
 </template>
 
@@ -58,7 +55,3 @@
     }
   }
 </script>
-
-total 100
-progress x
-

@@ -1,6 +1,6 @@
 <template>
   <div v-if="username">
-    <p>{{name }} ({{username }})</p>
+    <p>{{name}} ({{username}})</p>
   </div>
   <div v-else>
     <a href="/login">Login</a>
@@ -10,7 +10,7 @@
 <script>
 export default {
   sockets: {
-    PROFILE_UPDATED: function({ profile}) {
+    PROFILE_UPDATED: function({ profile }) {
       this.username = profile.username
       this.name = profile.name
     }
