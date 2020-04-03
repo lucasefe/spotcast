@@ -1,5 +1,6 @@
-import { CurrentPlayer }              from '../spotify';
-import mongoose, { Document, Schema } from 'mongoose';
+import * as spotify                        from '../spotify';
+import { CurrentPlayer }                   from '../spotify';
+import mongoose, { Document, Schema }      from 'mongoose';
 
 
 export interface UserModel extends Document {
@@ -40,4 +41,36 @@ const UserSchema = new Schema({
 
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 
-export default mongoose.model<UserModel>('User', UserSchema);
+const User = mongoose.model<UserModel>('User', UserSchema);
+
+export default User;
+
+export async function updateUser(username): Promise<UserModel | null> {
+  const user = await User.findOne({ username });
+  if (user) {
+    const currentPlayer = await getCurrentPlayer(user);
+    user.set({ currentPlayer });
+    await user.save();
+    return user;
+  } else
+    return null;
+}
+
+
+export async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
+  try {
+    const currentPlayer = await spotify.getCurrentPlayer({ accessToken: user.accessToken });
+    return currentPlayer;
+  } catch (error) {
+    const isUnauthorized = error.response && error.response.status === 401;
+    if (isUnauthorized) {
+      const { accessToken } = await spotify.getAccessToken({ refreshToken: user.refreshToken });
+      const currentPlayer   = await spotify.getCurrentPlayer({ accessToken });
+      user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
+      await user.save();
+      return currentPlayer;
+    } else
+      throw error;
+  }
+
+}

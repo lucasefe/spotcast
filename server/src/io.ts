@@ -1,7 +1,9 @@
 import { default as connectMongoDBSession } from 'connect-mongodb-session';
+import { updateUser }                       from './models/user';
 import cookieParser                         from 'cookie-parser';
 import http                                 from 'http';
 import logger                               from './util/logger';
+import ms                                   from 'ms';
 import passport                             from 'passport';
 import passportSocketIo                     from 'passport.socketio';
 import session                              from 'express-session';
@@ -12,6 +14,8 @@ const store      = new MongoStore({
   uri:        'mongodb://localhost:27017/fogon',
   collection: 'sessions'
 });
+
+const users = new Map<string, sio.Socket>();
 
 exports.initialize = function(httpServer: http.Server): sio.Server {
   logger.info('initializing socket server');
@@ -62,10 +66,26 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
       logger.debug(`A user connected with ${socket.id}`);
 
       if (socket.request.user && socket.request.user.logged_in) {
-        const profile = userToJSON(socket.request.user);
+        const { user } = socket.request;
+        const profile  = userToProfile(user);
+
+        users.set(user.username, socket);
         socket.emit('PROFILE_UPDATED', { profile });
       }
     });
+
+    setInterval(function() {
+      logger.debug('Refreshing users and updating players');
+      users.forEach((socket, username) => {
+        updateUser(username).then(u => {
+          if (u) {
+            const player = u.currentPlayer;
+            socket.emit('PLAYER_UPDATED', player);
+          }
+        });
+      });
+
+    }, ms('2s'));
   }
 
   return sockets;
@@ -76,9 +96,10 @@ interface ProfileResponse {
   name: string;
 }
 
-function userToJSON(user): ProfileResponse {
+function userToProfile(user): ProfileResponse {
   const { username } = user;
   const { name }     = user;
+
   return {
     username,
     name

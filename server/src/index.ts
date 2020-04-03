@@ -1,9 +1,6 @@
 import * as auth                            from './auth';
 import * as http                            from 'http';
-import * as spotify                         from './spotify';
 import { default as connectMongoDBSession } from 'connect-mongodb-session';
-import { secured }                          from './auth';
-import { UserModel }                        from './models/user';
 import bodyParser                           from 'body-parser';
 import cookieParser                         from 'cookie-parser';
 import cors                                 from 'cors';
@@ -13,7 +10,7 @@ import mongoose                             from 'mongoose';
 import morgan                               from 'morgan';
 import passport                             from 'passport';
 import session                              from 'express-session';
-import User                                 from './models/user';
+
 
 /* eslint-disable camelcase */
 
@@ -54,44 +51,9 @@ export default function configureServer(): http.Server {
 
   app.use(auth.routes);
 
-  app.get('/me', secured, async function(req, res) {
-    const user: any   = req.user;
-    const updatedUser = await updateUser(user.username);
-    res.json({ me: updatedUser });
-  });
-
   const httpServer = http.createServer(app);
   const sockets    = require('./io').initialize(httpServer);
   return httpServer;
 }
 
 
-async function updateUser(username): Promise<UserModel | null> {
-  const user = await User.findOne({ username });
-  if (user) {
-    const currentPlayer = await getCurrentPlayer(user);
-    user.set({ currentPlayer });
-    await user.save();
-    return user;
-  } else
-    return null;
-}
-
-
-async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
-  try {
-    const currentPlayer = await spotify.getCurrentPlayer({ accessToken: user.accessToken });
-    return currentPlayer;
-  } catch (error) {
-    const isUnauthorized = error.response && error.response.status === 401;
-    if (isUnauthorized) {
-      const { accessToken } = await spotify.getAccessToken({ refreshToken: user.refreshToken });
-      const currentPlayer   = await spotify.getCurrentPlayer({ accessToken });
-      user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
-      await user.save();
-      return currentPlayer;
-    } else
-      throw error;
-  }
-
-}
