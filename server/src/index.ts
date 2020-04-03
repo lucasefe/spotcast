@@ -52,7 +52,9 @@ export default function configureServer(): http.Server {
   app.use(auth.routes);
 
   const httpServer = http.createServer(app);
-  const sockets    = require('./io').initialize(httpServer);
+
+  require('./io').initialize(httpServer);
+
   return httpServer;
 }
 
