@@ -14,7 +14,7 @@ export default {
     columns: [
       {
         field: 'name',
-        label: 'Name',
+        label: 'Members',
         width: '40'
       }
     ]

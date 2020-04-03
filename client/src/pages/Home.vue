@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <Profile></Profile>
-    <h2>Room name: {{ room }}</h2>
+    <h2>Fogón name: {{ room }}</h2>
     <Player></Player>
     <Members></Members>
   </div>

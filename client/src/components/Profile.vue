@@ -1,9 +1,9 @@
 <template>
   <div v-if="username">
-    <p>{{name}} ({{username}})</p>
+    Logged in as <p>{{name}} ({{username}})</p>
   </div>
   <div v-else>
-    <a href="/login">Login</a>
+    <a href="/login">Login with Spotify</a>
   </div>
 </template>
 
