@@ -1,7 +1,7 @@
 <template>
   <div v-if="player">
     <Player v-bind:player="player"></Player>
-    <Members v-bind:list="members"></Members>
+    <b-table :data="members" :columns="columns"></b-table>
     <button v-on:click="join">Join session</button>
   </div>
   <div v-else>
@@ -11,12 +11,10 @@
 
 <script>
   import Player from "./Player.vue"
-  import Members from "./Members.vue"
 
   export default {
     components: {
       Player,
-      Members
     },
     sockets: {
       PLAYER_UPDATED: function({ player, user }) {
@@ -31,7 +29,14 @@
     data: () => ({
       user: '',
       player: '',
-      members: ''
+      members: '',
+      columns: [
+        {
+          field: 'name',
+          label: '',
+          width: '40'
+        }
+      ]
     }),
 
     methods: {
