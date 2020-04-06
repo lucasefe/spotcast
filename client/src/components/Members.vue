@@ -1,16 +1,11 @@
 <template>
-  <b-table :data="members" :columns="columns"></b-table>
+  <b-table :data="list" :columns="columns"></b-table>
 </template>
 
 <script>
 export default {
-  sockets: {
-    MEMBERS_UPDATED: function(socket_data) {
-      this.members = socket_data.members;
-    }
-  },
+  props: [ 'list' ],
   data: () => ({
-    members: [ ],
     columns: [
       {
         field: 'name',
