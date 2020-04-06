@@ -13,11 +13,13 @@ export default {
     PROFILE_UPDATED: function({ profile }) {
       this.username = profile.username
       this.name = profile.name
+      this.room = profile.room
     }
   },
   data: () => ({
     username: '',
-    name: ''
+    name: '',
+    room: ''
   })
 }
 </script>

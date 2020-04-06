@@ -76,11 +76,10 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 
       if (socket.request.user && socket.request.user.logged_in) {
         const { user } = socket.request;
-        const profile  = userToJSON(user);
         session.user   = user;
 
         logger.debug(`User ${user.username} connected.`);
-        socket.emit('PROFILE_UPDATED', { profile });
+        joinRoom(user.username);
       }
 
       socket.on('disconnect', function() {
@@ -92,9 +91,9 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
             const room = session.room;
             socket.leave(room);
             logger.debug(`User ${user.username} left ${room}.`);
-            emitMembersUpdated(room, sockets);
-
+            emitRoomMembersUpdated(sockets, room);
           }
+
           logger.debug(`User ${user.username} disconnected`);
         }
 
@@ -102,30 +101,31 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
       });
 
       socket.on('JOIN', function({ room }) {
-        if (session.user) {
-
-          if (!room)
-            return;
-
-          const user          = session.user;
-          const alreadyInRoom = session.room && session.room === room;
-          if (alreadyInRoom) {
-            logger.debug(`User ${user.username} already in room ${room}. `);
-            return;
-          }
-
-          if (session.room) {
-            logger.debug(`User ${user.username} left room ${session.room}`);
-            socket.leave(session.room);
-          }
-
-          logger.debug(`User ${user.username} joined room ${room}`);
-          session.room = room;
-
-          socket.join(room);
-          emitMembersUpdated(room, sockets);
-        }
+        joinRoom(room);
       });
+
+      function joinRoom(room): void {
+        const user = session.user;
+        if (!user || !room)
+          return;
+
+        const alreadyInRoom = session.room && session.room === room;
+        if (alreadyInRoom) {
+          logger.debug(`User ${user.username} already in room ${room}. `);
+          return;
+        }
+
+        if (session.room) {
+          logger.debug(`User ${user.username} left room ${session.room}`);
+          socket.leave(session.room);
+        }
+
+        logger.debug(`User ${user.username} joined room ${room}`);
+        session.room = room;
+        socket.join(room);
+        emitProfileUpdated(socket, session);
+        emitRoomMembersUpdated(sockets, room);
+      }
     });
 
 
@@ -157,11 +157,22 @@ interface UserResponse {
   name: string;
 }
 
+interface ProfileResponse extends UserResponse {
+  room: string;
+}
+
 function userToJSON(user): UserResponse {
   const { username } = user;
   const { name }     = user;
 
   return { username, name };
+}
+
+function sessionToJSON(session): ProfileResponse {
+  return {
+    ...userToJSON(session.user),
+    room: session.room
+  };
 }
 
 interface PlayerResponse {
@@ -220,7 +231,8 @@ function getMembers(clients): Array<UserResponse> {
   }).filter(Boolean);
 }
 
-function emitMembersUpdated(room, sockets): void {
+
+function emitRoomMembersUpdated(sockets, room): void {
   sockets.in(room).clients(function(error, clients) {
     if (error)
       throw error;
@@ -228,4 +240,8 @@ function emitMembersUpdated(room, sockets): void {
     const members = getMembers(clients);
     sockets.in(room).emit('MEMBERS_UPDATED', { members });
   });
+}
+
+function emitProfileUpdated(socket, session): void {
+  socket.emit('PROFILE_UPDATED', { profile: sessionToJSON(session) });
 }

@@ -18,11 +18,15 @@ export default {
   },
   sockets: {
     PROFILE_UPDATED: function({ profile }) {
-      this.username = profile.username
-      this.name = profile.name
-      this.room = this.$route.params.username ? this.$route.params.username : this.username;
+      this.username = profile.username;
+      this.name = profile.name;
+      this.room = profile.room;
 
-      this.$socket.emit('JOIN', { room: this.room })
+      const routeRoom = this.$route.params.room;
+      // join specific room
+      if (routeRoom && routeRoom !== this.room) {
+        this.$socket.emit('JOIN', { room: routeRoom})
+      }
     }
   },
 
