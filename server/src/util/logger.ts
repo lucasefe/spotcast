@@ -2,7 +2,7 @@ import * as winston from 'winston';
 
 const alignColorsAndTime = winston.format.combine(
   winston.format.colorize({ all: true }),
-  winston.format.timestamp({ format: 'YY-MM-DD HH:MM:SS' }),
+  winston.format.timestamp({ format: 'YY-MM-DD HH:mm:ss' }),
   winston.format.printf(line => `${line.timestamp} ${line.level} : ${line.message}`)
 );
 
