@@ -170,6 +170,7 @@ interface PlayerResponse {
   albumName: string;
   albumCoverURL: string;
   artistName: string;
+  isPlaying: boolean;
 }
 
 interface PlayerContext {
@@ -192,8 +193,9 @@ function playerToJSON(player: spotify.CurrentPlayer|undefined): PlayerResponse|n
     const albumName     = player.item.album.name;
     const artistName    = player.item.artists.map(a => a.name).join(', ');
     const albumCoverURL = player.item.album.images[0].url;
+    const isPlaying     = player.isPlaying;
 
-    return { trackProgress, trackName, artistName, albumName, albumCoverURL };
+    return { trackProgress, trackName, artistName, albumName, albumCoverURL, isPlaying };
   } else
     return null;
 }

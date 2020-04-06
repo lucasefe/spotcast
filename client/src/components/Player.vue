@@ -14,7 +14,7 @@
           </div>
         </div>
         <div class="content">
-          <b-progress :value="player.trackProgress" type="is-success" size="is-small" format="percent"></b-progress>
+          <b-progress :value="player.trackProgress" :type="type" size="is-small" format="percent"></b-progress>
         </div>
       </div>
     </div>
@@ -36,7 +36,13 @@
     data: () => ({
       user: '',
       player: ''
-    })
+    }),
+
+    computed: {
+      type: function() {
+        return this.player.isPlaying ? 'is-success' : 'is-darkgrey';
+      }
+    }
 
   }
 </script>
