@@ -1,3 +1,4 @@
+import * as spotify                                          from './spotify';
 import { default as connectMongoDBSession }                  from 'connect-mongodb-session';
 import { updateUser }                                        from './models/user';
 import { UserModel }                                         from './models/user';
@@ -75,7 +76,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 
       if (socket.request.user && socket.request.user.logged_in) {
         const { user } = socket.request;
-        const profile  = userToProfile(user);
+        const profile  = userToJSON(user);
         session.user   = user;
 
         logger.debug(`User ${user.username} connected.`);
@@ -138,8 +139,8 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         if (user) {
           updateUser(user.username).then(u => {
             if (u && room === user.username) {
-              const player = u.currentPlayer;
-              sockets.in(room).emit('PLAYER_UPDATED', player);
+              const playerContext = getPlayerContext(u);
+              sockets.in(room).emit('PLAYER_UPDATED', playerContext);
             }
           });
         }
@@ -151,19 +152,50 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
   return sockets;
 };
 
-interface ProfileResponse {
+interface UserResponse {
   username: string;
   name: string;
 }
 
-function userToProfile(user): ProfileResponse {
+function userToJSON(user): UserResponse {
   const { username } = user;
   const { name }     = user;
 
+  return { username, name };
+}
+
+interface PlayerResponse {
+  trackName: string;
+  trackProgress: number;
+  albumName: string;
+  albumCoverURL: string;
+  artistName: string;
+}
+
+interface PlayerContext {
+  user: UserResponse;
+  player: PlayerResponse|null;
+}
+
+function getPlayerContext(user: UserModel): PlayerContext {
   return {
-    username,
-    name
+    user:   userToJSON(user),
+    player: playerToJSON(user.currentPlayer)
   };
+}
+
+function playerToJSON(player: spotify.CurrentPlayer|undefined): PlayerResponse|null {
+  if (player && player.item) {
+    const trackName     = player.item.name;
+    const trackProgress = player.progressMS * 100 / player.item.duration_ms;
+
+    const albumName     = player.item.album.name;
+    const artistName    = player.item.artists.map(a => a.name).join(', ');
+    const albumCoverURL = player.item.album.images[0].url;
+
+    return { trackProgress, trackName, artistName, albumName, albumCoverURL };
+  } else
+    return null;
 }
 
 function getSession(socket: sio.Socket): Session {
@@ -176,11 +208,11 @@ function getSession(socket: sio.Socket): Session {
   return newSession;
 }
 
-function getMembers(clients): Array<ProfileResponse> {
+function getMembers(clients): Array<UserResponse> {
   return clients.map(client => {
     const userSession = sessions.get(client);
     if (userSession && userSession.user)
-      return userToProfile(userSession.user);
+      return userToJSON(userSession.user);
     else
       return null;
   }).filter(Boolean);

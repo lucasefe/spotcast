@@ -8,6 +8,13 @@ export interface Album {
   type: string;
   uri: string;
   href: string;
+  images: Array<Image>;
+}
+
+export interface Image {
+  url: string;
+  width: number;
+  height: number;
 }
 
 export interface Artist{
@@ -22,9 +29,10 @@ export interface Item {
   id: string;
   type: string;
   uri: string;
+  name: string;
 
   album: Album;
-  artists: [Array<Artist>];
+  artists: Array<Artist>;
   disc_number: number;
   duration_ms: number;
   explicit: false;
