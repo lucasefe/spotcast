@@ -1,21 +1,12 @@
-import * as spotify                                          from './spotify';
-import { default as connectMongoDBSession }                  from 'connect-mongodb-session';
-import { updateUser }                                        from './models/user';
-import { UserModel }                                         from './models/user';
-import cookieParser                                          from 'cookie-parser';
-import expressSession                                        from 'express-session';
-import http                                                  from 'http';
-import logger                                                from './util/logger';
-import ms                                                    from 'ms';
-import passport                                              from 'passport';
-import passportSocketIo                                      from 'passport.socketio';
-import sio                                                   from 'socket.io';
+import * as spotify   from './spotify';
+import { updateUser } from './models/user';
+import { UserModel }  from './models/user';
+import http           from 'http';
+import initSessions   from './ioSession';
+import logger         from './util/logger';
+import ms             from 'ms';
+import sio            from 'socket.io';
 
-const MongoStore = connectMongoDBSession(expressSession);
-const store      = new MongoStore({
-  uri:        'mongodb://localhost:27017/fogon',
-  collection: 'sessions'
-});
 
 interface Session {
   socket: sio.Socket;
@@ -29,45 +20,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
   logger.info('initializing socket server');
   const sockets = sio(httpServer) as sio.Server;
 
-  sockets.use(passportSocketIo.authorize({
-    key:               'fogon.session',
-    name:              'fogon.session',
-    secret:            'cats', // TODO: replace secret
-    proxy:             true,
-    resave:            false,
-    saveUninitialized: false,
-    store,
-    passport,
-    cookieParser,
-    success:           onAuthorizeSuccess,  // *optional* callback on success - read more below
-    fail:              onAuthorizeFail
-  }));
-
-  function onAuthorizeSuccess(data, accept): void {
-    logger.debug('successful connection to socket.io');
-
-    // If you use socket.io@1.X the callback looks different
-    accept();
-  }
-
-  function onAuthorizeFail(data, message, error, accept): void {
-    if (error)
-      throw new Error(message);
-
-    logger.warn('failed connection to socket.io:', message);
-
-    // We use this callback to log all of our failed connections.
-    accept(null, false);
-
-    // OR
-
-    // If you use socket.io@1.X the callback looks different
-    // If you don't want to accept the connection
-    if (error)
-      accept(new Error(message));
-    // this error will be sent to the user as a special error-package
-    // see: http://socket.io/docs/client-api/#socket > error-object
-  }
+  initSessions(sockets);
 
   if (sockets) {
     sockets.on('connection', (socket: any) => {
@@ -140,7 +93,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           updateUser(user.username).then(u => {
             if (u && room === user.username) {
               const playerContext = getPlayerContext(u);
-              sockets.in(room).emit('PLAYER_UPDATED', playerContext);
+              emitPlayerUpdated(sockets, room, playerContext);
             }
           });
         }
@@ -152,14 +105,17 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
   return sockets;
 };
 
+
 interface UserResponse {
   username: string;
   name: string;
 }
 
+
 interface ProfileResponse extends UserResponse {
   room: string;
 }
+
 
 function userToJSON(user): UserResponse {
   const { username } = user;
@@ -168,12 +124,14 @@ function userToJSON(user): UserResponse {
   return { username, name };
 }
 
+
 function sessionToJSON(session): ProfileResponse {
   return {
     ...userToJSON(session.user),
     room: session.room
   };
 }
+
 
 interface PlayerResponse {
   trackName: string;
@@ -184,10 +142,12 @@ interface PlayerResponse {
   isPlaying: boolean;
 }
 
+
 interface PlayerContext {
   user: UserResponse;
   player: PlayerResponse|null;
 }
+
 
 function getPlayerContext(user: UserModel): PlayerContext {
   return {
@@ -195,6 +155,7 @@ function getPlayerContext(user: UserModel): PlayerContext {
     player: playerToJSON(user.currentPlayer)
   };
 }
+
 
 function playerToJSON(player: spotify.CurrentPlayer|undefined): PlayerResponse|null {
   if (player && player.item) {
@@ -211,6 +172,7 @@ function playerToJSON(player: spotify.CurrentPlayer|undefined): PlayerResponse|n
     return null;
 }
 
+
 function getSession(socket: sio.Socket): Session {
   const sioSession = sessions.get(socket.id);
   if (sioSession)
@@ -220,6 +182,7 @@ function getSession(socket: sio.Socket): Session {
   sessions.set(socket.id, newSession);
   return newSession;
 }
+
 
 function getMembers(clients): Array<UserResponse> {
   return clients.map(client => {
@@ -242,6 +205,12 @@ function emitRoomMembersUpdated(sockets, room): void {
   });
 }
 
+
 function emitProfileUpdated(socket, session): void {
   socket.emit('PROFILE_UPDATED', { profile: sessionToJSON(session) });
+}
+
+
+function emitPlayerUpdated(sockets, room, playerContext): void {
+  sockets.in(room).emit('PLAYER_UPDATED', playerContext);
 }
