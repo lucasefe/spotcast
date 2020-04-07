@@ -1,20 +1,14 @@
-import * as spotify   from './spotify';
-import { updateUser } from './models/user';
-import { UserModel }  from './models/user';
-import http           from 'http';
-import initSessions   from './ioSession';
-import logger         from './util/logger';
-import ms             from 'ms';
-import sio            from 'socket.io';
+import * as spotify              from './spotify';
+import { updateUser }            from './models/user';
+import http                      from 'http';
+import initSessions              from './ioSession';
+import logger                    from './util/logger';
+import ms                        from 'ms';
+import SessionStore, { Session } from './session_store';
+import sio                       from 'socket.io';
 
 
-interface Session {
-  socket: sio.Socket;
-  user?: UserModel;
-  room?: string;
-}
-
-const sessions = new Map<string, Session>();
+const sessions = new SessionStore();
 
 exports.initialize = function(httpServer: http.Server): sio.Server {
   logger.info('initializing socket server');
@@ -25,10 +19,10 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
   if (sockets) {
     sockets.on('connection', (socket: any) => {
       logger.debug(`Socket id created: ${socket.id}`);
-      const session = getSession(socket);
 
       if (socket.request.user && socket.request.user.logged_in) {
         const { user } = socket.request;
+        const session  = sessions.getSession(socket);
         session.user   = user;
 
         logger.debug(`User ${user.username} connected.`);
@@ -37,6 +31,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 
       socket.on('disconnect', function() {
         logger.debug(`Socket id destroyed: ${socket.id}`);
+        const session = sessions.getSession(socket);
         if (session.user) {
           const user = session.user;
 
@@ -50,15 +45,36 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           logger.debug(`User ${user.username} disconnected`);
         }
 
-        sessions.delete(socket.id);
+        sessions.removeSession(socket);
       });
 
       socket.on('JOIN', function({ room }) {
         joinRoom(room);
       });
 
+      socket.on('CONNECT_PLAYER', function() {
+        const session = sessions.getSession(socket);
+        const user    = session.user;
+        if (user) {
+          session.isConnected = false;
+          logger.debug(`User ${user.username} connected player to ${session.room}. `);
+          emitProfileUpdated(socket, session);
+        }
+      });
+
+      socket.on('DISCONNECT_PLAYER', function() {
+        const session = sessions.getSession(socket);
+        const user    = session.user;
+        if (user) {
+          session.isConnected = true;
+          logger.debug(`User ${user.username} disconnected player from ${session.room}. `);
+          emitProfileUpdated(socket, session);
+        }
+      });
+
       function joinRoom(room): void {
-        const user = session.user;
+        const session = sessions.getSession(socket);
+        const user    = session.user;
         if (!user || !room)
           return;
 
@@ -82,19 +98,26 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
     });
 
 
-    setInterval(function() {
-      const userSessions = Array.from(sessions, ([ _, value ]) => value).filter(s => s.user);
+    setInterval(() => {
+      const userSessions = sessions.getSessions();
       if (userSessions.length === 0)
         return;
 
       logger.debug(`Refreshing users and updating players: ${userSessions.length}`);
-      userSessions.map(({ user, room }) => {
+      userSessions.map(session => {
+        const { user } = session;
+
         if (user) {
+          logger.debug(`Refreshing user: ${user.username}`);
+          const { room } = session;
+
           updateUser(user.username).then(u => {
             if (u && room === user.username) {
-              const playerContext = getPlayerContext(u);
+              const playerContext = getPlayerContext(session);
               emitPlayerUpdated(sockets, room, playerContext);
-            }
+            } else
+              logger.debug(`Nobody listening to what user ${user.username} is playing. `);
+
           });
         }
       });
@@ -126,10 +149,12 @@ function userToJSON(user): UserResponse {
 
 
 function sessionToJSON(session): ProfileResponse {
-  return {
+  const json = {
     ...userToJSON(session.user),
-    room: session.room
+    room:        session.room
   };
+
+  return json;
 }
 
 
@@ -146,13 +171,21 @@ interface PlayerResponse {
 interface PlayerContext {
   user: UserResponse;
   player: PlayerResponse|null;
+  isConnected: boolean;
 }
 
 
-function getPlayerContext(user: UserModel): PlayerContext {
+function getPlayerContext(session: Session): PlayerContext|null {
+  const { user }        = session;
+  const { isConnected } = session;
+
+  if (!user)
+    return null;
+
   return {
     user:   userToJSON(user),
-    player: playerToJSON(user.currentPlayer)
+    player: playerToJSON(user.currentPlayer),
+    isConnected
   };
 }
 
@@ -173,20 +206,10 @@ function playerToJSON(player: spotify.CurrentPlayer|undefined): PlayerResponse|n
 }
 
 
-function getSession(socket: sio.Socket): Session {
-  const sioSession = sessions.get(socket.id);
-  if (sioSession)
-    return sioSession;
-
-  const newSession = { socket };
-  sessions.set(socket.id, newSession);
-  return newSession;
-}
-
 
 function getMembers(clients): Array<UserResponse> {
   return clients.map(client => {
-    const userSession = sessions.get(client);
+    const userSession = sessions.getSessionById(client);
     if (userSession && userSession.user)
       return userToJSON(userSession.user);
     else
