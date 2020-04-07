@@ -106,9 +106,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
       logger.debug(`Refreshing users and updating players: ${userSessions.length}`);
       userSessions.map(session => {
         const { username } = session;
-
-        logger.debug(`Refreshing user: ${username}`);
-        const { room } = session;
+        const { room }     = session;
 
         updateUser(username).then(u => {
           if (u && room === username) {
