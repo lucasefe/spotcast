@@ -1,37 +1,52 @@
-import { UserModel }    from './models/user';
-import sio              from 'socket.io';
+import * as spotify from './spotify';
+import sio          from 'socket.io';
+
 
 export interface Session {
   socket: sio.Socket;
-  user?: UserModel;
-  room?: string;
+  username: string;
+  name: string;
   isConnected: boolean;
+  room?: string;
+  currentPlayer?: spotify.CurrentPlayer;
 }
 
 
 export default class SessionStore {
   private sessions: Map<string, Session>
+
   constructor() {
     this.sessions = new Map<string, Session>();
   }
 
-  getSessionById(id: string): Session| undefined {
-    const sioSession = this.sessions.get(id);
+  getSession(socket: sio.Socket|string): Session| undefined {
+    const socketId   = typeof socket === 'string' ? socket : socket.id;
+    const sioSession = this.sessions.get(socketId);
     return sioSession;
   }
 
-  getSession(socket: sio.Socket): Session {
-    const sioSession = this.sessions.get(socket.id);
-    if (sioSession)
-      return sioSession;
+  createOrUpdateSession(socket: sio.Socket, user: any): Session {
+    const session = this.getSession(socket);
+    if (session) {
+      session.username    = user.username;
+      session.name        = user.name;
+      session.isConnected = false;
+      session.room        = undefined;
+      return session;
+    } else {
+      const newSession = this.createSession(socket, user);
+      this.sessions.set(socket.id, newSession);
+      return newSession;
+    }
+  }
 
-    const newSession = {
+  createSession(socket: sio.Socket, user: any): Session {
+    return {
       socket,
+      username:    user.username,
+      name:        user.name,
       isConnected: false
     };
-
-    this.sessions.set(socket.id, newSession);
-    return newSession;
   }
 
   removeSession(socket: sio.Socket): void {
@@ -40,7 +55,6 @@ export default class SessionStore {
 
   getSessions(): Session[] {
     return Array
-      .from(this.sessions, ([ _, value ]) => value)
-      .filter(s => s.user);
+      .from(this.sessions, ([ _, value ]) => value);
   }
 }

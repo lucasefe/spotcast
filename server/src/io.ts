@@ -22,77 +22,77 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 
       if (socket.request.user && socket.request.user.logged_in) {
         const { user } = socket.request;
-        const session  = sessions.getSession(socket);
-        session.user   = user;
+        const session  = sessions.createOrUpdateSession(socket, user);
 
         logger.debug(`User ${user.username} connected.`);
-        joinRoom(user.username);
+        joinRoom(session, session.username);
       }
 
       socket.on('disconnect', function() {
         logger.debug(`Socket id destroyed: ${socket.id}`);
+
         const session = sessions.getSession(socket);
-        if (session.user) {
-          const user = session.user;
+        if (session) {
+          const { username } = session;
+          logger.debug(`User ${username} disconnected`);
+          sessions.removeSession(socket);
 
-          if (session.room) {
-            const room = session.room;
-            socket.leave(room);
-            logger.debug(`User ${user.username} left ${room}.`);
-            emitRoomMembersUpdated(sockets, room);
-          }
-
-          logger.debug(`User ${user.username} disconnected`);
+          if (session.room)
+            leaveRoom(session);
         }
-
-        sessions.removeSession(socket);
       });
 
       socket.on('JOIN', function({ room }) {
-        joinRoom(room);
+        const session = sessions.getSession(socket);
+        if (session)
+          joinRoom(session, room);
       });
 
       socket.on('CONNECT_PLAYER', function() {
         const session = sessions.getSession(socket);
-        const user    = session.user;
-        if (user) {
+        if (session) {
           session.isConnected = true;
-          logger.debug(`User ${user.username} connected player to ${session.room}. `);
+          logger.debug(`User ${session.username} connected player to ${session.room}. `);
           emitProfileUpdated(socket, session);
         }
       });
 
       socket.on('DISCONNECT_PLAYER', function() {
         const session = sessions.getSession(socket);
-        const user    = session.user;
-        if (user) {
+        if (session) {
           session.isConnected = false;
-          logger.debug(`User ${user.username} disconnected player from ${session.room}. `);
+          logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
           emitProfileUpdated(socket, session);
         }
       });
 
-      function joinRoom(room): void {
-        const session = sessions.getSession(socket);
-        const user    = session.user;
-        if (!user || !room)
-          return;
-
+      function joinRoom(session: Session, room: string): void {
+        const { username }  = session;
         const alreadyInRoom = session.room && session.room === room;
         if (alreadyInRoom) {
-          logger.debug(`User ${user.username} already in room ${room}. `);
+          logger.debug(`User ${username} already in room ${room}. `);
           return;
         }
 
         if (session.room) {
-          logger.debug(`User ${user.username} left room ${session.room}`);
+          logger.debug(`User ${username} left room ${session.room}`);
           socket.leave(session.room);
         }
 
-        logger.debug(`User ${user.username} joined room ${room}`);
+        logger.debug(`User ${username} joined room ${room}`);
         session.room = room;
         socket.join(room);
+
         emitProfileUpdated(socket, session);
+        emitRoomMembersUpdated(sockets, room);
+      }
+
+      function leaveRoom(session: Session): void {
+        const { room }     = session;
+        const { username } = session;
+
+        socket.leave(room);
+        logger.debug(`User ${username} left ${room}.`);
         emitRoomMembersUpdated(sockets, room);
       }
     });
@@ -105,21 +105,18 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 
       logger.debug(`Refreshing users and updating players: ${userSessions.length}`);
       userSessions.map(session => {
-        const { user } = session;
+        const { username } = session;
 
-        if (user) {
-          logger.debug(`Refreshing user: ${user.username}`);
-          const { room } = session;
+        logger.debug(`Refreshing user: ${username}`);
+        const { room } = session;
 
-          updateUser(user.username).then(u => {
-            if (u && room === user.username) {
-              const playerContext = getPlayerContext(session);
-              emitPlayerUpdated(sockets, room, playerContext);
-            } else
-              logger.debug(`Nobody listening to what user ${user.username} is playing. `);
-
-          });
-        }
+        updateUser(username).then(u => {
+          if (u && room === username) {
+            session.currentPlayer = u.currentPlayer;
+            const playerContext   = getPlayerContext(session);
+            emitPlayerUpdated(sockets, room, playerContext);
+          }
+        });
       });
 
     }, ms('2s'));
@@ -129,31 +126,31 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 };
 
 
-interface UserResponse {
+interface SessionResponse {
   username: string;
   name: string;
-}
-
-
-interface ProfileResponse extends UserResponse {
-  room: string;
   isConnected: boolean;
 }
 
 
-function userToJSON(user): UserResponse {
-  const { username } = user;
-  const { name }     = user;
-
-  return { username, name };
+interface ProfileResponse extends SessionResponse {
+  room: string;
 }
 
 
-function sessionToJSON(session): ProfileResponse {
+function sessionToJSON(session: Session): SessionResponse {
+  const { isConnected } = session;
+  const { username }    = session;
+  const { name }        = session;
+
+  return { username, name, isConnected };
+}
+
+
+function sessionToProfileJSON(session): ProfileResponse {
   const json = {
-    ...userToJSON(session.user),
-    room:        session.room,
-    isConnected: session.isConnected
+    ...sessionToJSON(session),
+    room:        session.room
   };
 
   return json;
@@ -171,20 +168,15 @@ interface PlayerResponse {
 
 
 interface PlayerContext {
-  user: UserResponse;
+  session: SessionResponse;
   player: PlayerResponse|null;
 }
 
 
 function getPlayerContext(session: Session): PlayerContext|null {
-  const { user } = session;
-
-  if (!user)
-    return null;
-
   return {
-    user:   userToJSON(user),
-    player: playerToJSON(user.currentPlayer)
+    session: sessionToJSON(session),
+    player:  playerToJSON(session.currentPlayer)
   };
 }
 
@@ -206,11 +198,11 @@ function playerToJSON(player: spotify.CurrentPlayer|undefined): PlayerResponse|n
 
 
 
-function getMembers(clients): Array<UserResponse> {
-  return clients.map(client => {
-    const userSession = sessions.getSessionById(client);
-    if (userSession && userSession.user)
-      return userToJSON(userSession.user);
+function getMembers(clients): Array<SessionResponse> {
+  return clients.map(socketId => {
+    const session = sessions.getSession(socketId);
+    if (session)
+      return sessionToJSON(session);
     else
       return null;
   }).filter(Boolean);
@@ -229,7 +221,7 @@ function emitRoomMembersUpdated(sockets, room): void {
 
 
 function emitProfileUpdated(socket, session): void {
-  socket.emit('PROFILE_UPDATED', { profile: sessionToJSON(session) });
+  socket.emit('PROFILE_UPDATED', { profile: sessionToProfileJSON(session) });
 }
 
 

@@ -69,7 +69,6 @@ module.exports = {
         "no-new": 2,
         "no-octal-escape": 2,
         "no-octal": 2,
-        "no-param-reassign": [2, { props: true }],
         "no-process-exit": 2,
         "no-proto": 2,
         "no-return-assign": 2,

@@ -4,7 +4,7 @@
     <b-table :data="members" :columns="columns"></b-table>
 
     <div v-if="canConnect">
-      <div v-if="isConnected">
+      <div v-if="profile.isConnected">
         <button v-on:click="disconnectPlayer">Disconnect you player</button>
       </div>
       <div v-else>
@@ -13,7 +13,7 @@
     </div>
   </div>
   <div v-else>
-    No player found. Looks like {{ user.name }} is not playing any music. :-(
+    No player found. Looks like {{ session.name }} is not playing any music. :-(
   </div>
 </template>
 
@@ -26,12 +26,11 @@
     },
     sockets: {
       PROFILE_UPDATED: function({ profile }) {
-        this.username = profile.username;
-        this.isConnected = profile.isConnected;
+        this.profile = profile
       },
-      PLAYER_UPDATED: function({ player, user }) {
+      PLAYER_UPDATED: function({ player, session}) {
         this.player = player;
-        this.user = user;
+        this.session = session;
       },
       MEMBERS_UPDATED: function(socket_data) {
         this.members = socket_data.members;
@@ -39,11 +38,10 @@
     },
 
     data: () => ({
-      user: '',
-      username: '',
       player: '',
+      session: '',
       members: '',
-      isConnected: '',
+      profile: '',
       columns: [
         {
           field: 'name',
@@ -63,7 +61,7 @@
     },
     computed:{
       canConnect: function() {
-        return this.username !== this.user.username;
+        return this.profile.username !== this.session.username;
       }
     }
   }
