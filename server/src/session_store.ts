@@ -1,7 +1,6 @@
 import { UserModel }    from './models/user';
 import sio              from 'socket.io';
 
-
 export interface Session {
   socket: sio.Socket;
   user?: UserModel;

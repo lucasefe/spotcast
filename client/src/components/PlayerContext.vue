@@ -27,11 +27,11 @@
     sockets: {
       PROFILE_UPDATED: function({ profile }) {
         this.username = profile.username;
+        this.isConnected = profile.isConnected;
       },
-      PLAYER_UPDATED: function({ player, user, isConnected }) {
+      PLAYER_UPDATED: function({ player, user }) {
         this.player = player;
         this.user = user;
-        this.isConnected = isConnected;
       },
       MEMBERS_UPDATED: function(socket_data) {
         this.members = socket_data.members;
@@ -39,8 +39,8 @@
     },
 
     data: () => ({
-      username: '',
       user: '',
+      username: '',
       player: '',
       members: '',
       isConnected: '',
@@ -54,12 +54,10 @@
     }),
 
     methods: {
-      connectPlayer: function(event) {
-        console.log('connecting player', event)
+      connectPlayer: function() {
         this.$socket.emit('CONNECT_PLAYER')
       },
-      disconnectPlayer: function(event) {
-        console.log('disconnecting player', event)
+      disconnectPlayer: function() {
         this.$socket.emit('DISCONNECT_PLAYER')
       }
     },

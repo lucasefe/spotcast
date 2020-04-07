@@ -56,7 +56,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         const session = sessions.getSession(socket);
         const user    = session.user;
         if (user) {
-          session.isConnected = false;
+          session.isConnected = true;
           logger.debug(`User ${user.username} connected player to ${session.room}. `);
           emitProfileUpdated(socket, session);
         }
@@ -66,7 +66,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         const session = sessions.getSession(socket);
         const user    = session.user;
         if (user) {
-          session.isConnected = true;
+          session.isConnected = false;
           logger.debug(`User ${user.username} disconnected player from ${session.room}. `);
           emitProfileUpdated(socket, session);
         }
@@ -137,6 +137,7 @@ interface UserResponse {
 
 interface ProfileResponse extends UserResponse {
   room: string;
+  isConnected: boolean;
 }
 
 
@@ -151,7 +152,8 @@ function userToJSON(user): UserResponse {
 function sessionToJSON(session): ProfileResponse {
   const json = {
     ...userToJSON(session.user),
-    room:        session.room
+    room:        session.room,
+    isConnected: session.isConnected
   };
 
   return json;
@@ -171,21 +173,18 @@ interface PlayerResponse {
 interface PlayerContext {
   user: UserResponse;
   player: PlayerResponse|null;
-  isConnected: boolean;
 }
 
 
 function getPlayerContext(session: Session): PlayerContext|null {
-  const { user }        = session;
-  const { isConnected } = session;
+  const { user } = session;
 
   if (!user)
     return null;
 
   return {
     user:   userToJSON(user),
-    player: playerToJSON(user.currentPlayer),
-    isConnected
+    player: playerToJSON(user.currentPlayer)
   };
 }
 
