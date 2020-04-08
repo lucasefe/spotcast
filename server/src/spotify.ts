@@ -1,6 +1,8 @@
 import * as auth                                         from './auth';
+import { UserModel }                                     from './models/user';
 import axios, { AxiosRequestConfig }                     from 'axios';
 import qs                                                from 'qs';
+
 
 export interface Album {
   id: string;
@@ -136,4 +138,49 @@ export async function getCurrentPlayer({ accessToken }: GetCurrentPlayerParams):
     currentlyPlayingType: response.data.currently_playing_type,
     isPlaying:            response.data.is_playing
   };
+}
+
+export async function play(user: UserModel, itemURI, progressMS): Promise<void> {
+  const { accessToken } = user;
+
+  await retryIf;
+  async function doPlay() {
+    const options: AxiosRequestConfig = {
+      headers: {
+        'Accept':        'application/json',
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      }
+    };
+
+    /* eslint-disable @typescript-eslint/camelcase  */
+    const data = {
+      uris:        [ itemURI ],
+      position_ms: progressMS
+    };
+    /* eslint-enable @typescript-eslint/camelcase  */
+
+    await axios.put('https://api.spotify.com/v1/me/player/play', data, options);
+  }
+
+}
+
+export async function pause(user: UserModel): Promise<void> {
+  const { accessToken } = user;
+
+  const options: AxiosRequestConfig = {
+    headers: {
+      'Accept':        'application/json',
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    }
+  };
+
+  try {
+    const response = await axios.put('https://api.spotify.com/v1/me/player/pause', options);
+    console.log({ response });
+  } catch (error) {
+    console.log({ error });
+  }
+
 }
