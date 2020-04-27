@@ -17,7 +17,11 @@ import session                              from 'express-session';
 require('../lib/router_with_promises');
 
 export default function configureServer(): http.Server {
-  mongoose.connect('mongodb://localhost:27017/fogon', {
+  const mongoURI = process.env.MONGODB_URI ?
+    process.env.MONGODB_URI  :
+    'mongodb://localhost:27017/fogon';
+
+  mongoose.connect(mongoURI, {
     useNewUrlParser: true
   });
 

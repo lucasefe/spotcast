@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "tsc && bin/run"
+    "watch": "tsc && bin/run",
+    "start": "bin/run"
+  },
+  "engines": {
+    "node": "12.16.x"
   },
   "author": "",
   "license": "ISC",

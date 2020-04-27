@@ -7,8 +7,12 @@ import passportSocketIo                                      from 'passport.sock
 
 export default function(sockets): void {
   const MongoStore = connectMongoDBSession(expressSession);
-  const store      = new MongoStore({
-    uri:        'mongodb://localhost:27017/fogon',
+  const mongoURI   = process.env.MONGODB_URI ?
+    process.env.MONGODB_URI  :
+    'mongodb://localhost:27017/fogon';
+
+  const store = new MongoStore({
+    uri:        mongoURI,
     collection: 'sessions'
   });
 
