@@ -28,7 +28,7 @@ export default function configureServer(): http.Server {
   const app        = express();
   const MongoStore = connectMongoDBSession(session);
   const store      = new MongoStore({
-    uri:        'mongodb://localhost:27017/fogon',
+    uri:        mongoURI,
     collection: 'sessions'
   });
   app.use(express.static(`${__dirname  }/../public`));

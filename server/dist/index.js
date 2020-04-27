@@ -34,7 +34,7 @@ function configureServer() {
     const app = express_1.default();
     const MongoStore = connect_mongodb_session_1.default(express_session_1.default);
     const store = new MongoStore({
-        uri: 'mongodb://localhost:27017/fogon',
+        uri: mongoURI,
         collection: 'sessions'
     });
     app.use(express_1.default.static(`${__dirname}/../public`));
