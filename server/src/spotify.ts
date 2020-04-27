@@ -1,8 +1,11 @@
 import * as auth                                         from './auth';
 import { UserModel }                                     from './models/user';
-import axios, { AxiosRequestConfig }                     from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig }      from 'axios';
+import Debug                                             from 'debug';
 import qs                                                from 'qs';
+import('axios-debug-log');
 
+const debug = Debug('spotify');
 
 export interface Album {
   id: string;
@@ -84,7 +87,6 @@ export interface CurrentPlayerResponse {
   isPlaying: boolean;
 }
 
-
 export async function getAccessToken({ refreshToken }: GetAccessTokenParams): Promise<RefreshAccessTokenResponse> {
   const options: AxiosRequestConfig = {
     headers: {
@@ -121,7 +123,7 @@ export async function getCurrentPlayer({ accessToken }: GetCurrentPlayerParams):
     headers: {
       'Accept':        'application/json',
       'Content-Type':  'application/x-www-form-urlencoded',
-      'Authorization': `Bearer ${  accessToken}`
+      'Authorization': `Bearer ${accessToken}`
     }
   };
 
@@ -140,47 +142,82 @@ export async function getCurrentPlayer({ accessToken }: GetCurrentPlayerParams):
   };
 }
 
+
 export async function play(user: UserModel, itemURI, progressMS): Promise<void> {
-  const { accessToken } = user;
+  debug(`Playing  ${user.username}:${itemURI}:${progressMS}`);
 
-  await retryIf;
-  async function doPlay() {
-    const options: AxiosRequestConfig = {
-      headers: {
-        'Accept':        'application/json',
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      }
-    };
-
-    /* eslint-disable @typescript-eslint/camelcase  */
-    const data = {
-      uris:        [ itemURI ],
-      position_ms: progressMS
-    };
-    /* eslint-enable @typescript-eslint/camelcase  */
-
-    await axios.put('https://api.spotify.com/v1/me/player/play', data, options);
-  }
-
+  const instance = getSpotifyAPIClient(user);
+  /* eslint-disable @typescript-eslint/camelcase  */
+  await instance.put('/me/player/play', {
+    uris:        [ itemURI ],
+    position_ms: progressMS
+  });
+  /* eslint-enable @typescript-eslint/camelcase  */
 }
 
 export async function pause(user: UserModel): Promise<void> {
-  const { accessToken } = user;
+  debug(`Pausing  ${user.username}`);
+  const instance = getSpotifyAPIClient(user);
+  await instance.put('/me/player/pause');
+}
 
-  const options: AxiosRequestConfig = {
+
+function getSpotifyAPIClient(user: UserModel): AxiosInstance {
+  const { accessToken, refreshToken } = user;
+  const instance                      = axios.create({
+    baseURL: 'https://api.spotify.com/v1',
+    timeout: 1000,
     headers: {
       'Accept':        'application/json',
       'Content-Type':  'application/json',
       'Authorization': `Bearer ${accessToken}`
     }
-  };
+  });
 
-  try {
-    const response = await axios.put('https://api.spotify.com/v1/me/player/pause', options);
-    console.log({ response });
-  } catch (error) {
-    console.log({ error });
-  }
+  instance.interceptors.response.use(response => {
+    return response;
+  },
+  function(error) {
+    debug(error.response.data.error);
+    const originalRequest = error.config;
+    if (error.response.status === 401 && !originalRequest._retry) {
 
+      originalRequest._retry = true;
+
+      const options: AxiosRequestConfig = {
+        headers: {
+          'Accept':       'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        auth: {
+          username: auth.clientID,
+          password: auth.clientSecret
+        }
+      };
+
+      /* eslint-disable @typescript-eslint/camelcase  */
+      const data = qs.stringify({
+        grant_type:    'refresh_token',
+        refresh_token: refreshToken
+      });
+        /* eslint-enable @typescript-eslint/camelcase  */
+
+      return axios.post('https://accounts.spotify.com/api/token', data, options)
+        .then(res => {
+          const newAccessToken = res.data.access_token;
+          // TODO Store token
+          // const expiresIn      = res.data.expires_in;
+          if (res.status === 200) {
+            originalRequest.headers.common.Authorization = `Bearer ${  newAccessToken}`;
+            return axios(originalRequest);
+          } else
+            return res;
+        });
+    } else if (error.response.status === 404)
+      return Promise.reject('NoDevice');
+    else
+      return Promise.reject(error);
+  });
+
+  return instance;
 }
