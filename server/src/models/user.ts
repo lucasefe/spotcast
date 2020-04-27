@@ -30,7 +30,10 @@ const UserSchema = new Schema({
   currentPlayer: {
     device:               { type: Object },
     shuffleState:         { type: Boolean },
-    repeatState:          { type: String, enum: [ 'off' ] },
+    repeatState:          {
+      type: String,
+      enum: [ 'off', 'track', 'off' ]
+    },
     timestamp:            { type: Number },
     context:              { type: Object },
     progressMS:           { type: Number },
