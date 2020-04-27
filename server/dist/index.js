@@ -25,7 +25,10 @@ const express_session_1 = __importDefault(require("express-session"));
 /* eslint-disable camelcase */
 require('../lib/router_with_promises');
 function configureServer() {
-    mongoose_1.default.connect('mongodb://localhost:27017/fogon', {
+    const mongoURI = process.env.MONGODB_URI ?
+        process.env.MONGODB_URI :
+        'mongodb://localhost:27017/fogon';
+    mongoose_1.default.connect(mongoURI, {
         useNewUrlParser: true
     });
     const app = express_1.default();

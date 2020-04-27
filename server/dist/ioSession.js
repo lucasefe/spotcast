@@ -11,8 +11,11 @@ const passport_1 = __importDefault(require("passport"));
 const passport_socketio_1 = __importDefault(require("passport.socketio"));
 function default_1(sockets) {
     const MongoStore = connect_mongodb_session_1.default(express_session_1.default);
+    const mongoURI = process.env.MONGODB_URI ?
+        process.env.MONGODB_URI :
+        'mongodb://localhost:27017/fogon';
     const store = new MongoStore({
-        uri: 'mongodb://localhost:27017/fogon',
+        uri: mongoURI,
         collection: 'sessions'
     });
     sockets.use(passport_socketio_1.default.authorize({
