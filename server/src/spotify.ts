@@ -1,11 +1,13 @@
-import * as auth                                         from './auth';
-import { UserModel }                                     from './models/user';
-import axios, { AxiosInstance, AxiosRequestConfig }      from 'axios';
-import Debug                                             from 'debug';
-import qs                                                from 'qs';
+import * as auth                                                                      from './auth';
+import { UserModel }                                                                  from './models/user';
+import axios, { AxiosInstance, AxiosPromise, AxiosRequestConfig, AxiosResponse }      from 'axios';
+import Debug                                                                          from 'debug';
+import qs                                                                             from 'qs';
 import('axios-debug-log');
 
 const debug = Debug('spotify');
+
+/* eslint-disable @typescript-eslint/camelcase  */
 
 export interface Album {
   id: string;
@@ -88,30 +90,7 @@ export interface CurrentPlayerResponse {
 }
 
 export async function getAccessToken({ refreshToken }: GetAccessTokenParams): Promise<RefreshAccessTokenResponse> {
-  const options: AxiosRequestConfig = {
-    headers: {
-      'Accept':       'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    auth: {
-      username: auth.clientID,
-      password: auth.clientSecret
-    }
-  };
-
-  /* eslint-disable @typescript-eslint/camelcase  */
-  const data = qs.stringify({
-    grant_type:    'refresh_token',
-    refresh_token: refreshToken
-  });
-  /* eslint-enable @typescript-eslint/camelcase  */
-
-  const response = await axios.post(
-    'https://accounts.spotify.com/api/token',
-    data,
-    options
-  );
-
+  const response = await requestAccessToken({ refreshToken });
   return {
     accessToken: response.data.access_token,
     expiresIn:   response.data.expires_in
@@ -147,18 +126,37 @@ export async function play(user: UserModel, itemURI, progressMS): Promise<void> 
   debug(`Playing  ${user.username}:${itemURI}:${progressMS}`);
 
   const instance = getSpotifyAPIClient(user);
-  /* eslint-disable @typescript-eslint/camelcase  */
   await instance.put('/me/player/play', {
     uris:        [ itemURI ],
     position_ms: progressMS
   });
-  /* eslint-enable @typescript-eslint/camelcase  */
 }
 
 export async function pause(user: UserModel): Promise<void> {
   debug(`Pausing  ${user.username}`);
   const instance = getSpotifyAPIClient(user);
   await instance.put('/me/player/pause');
+}
+
+
+function requestAccessToken({ refreshToken }): Promise<AxiosResponse> {
+  const options: AxiosRequestConfig = {
+    headers: {
+      'Accept':       'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    auth: {
+      username: auth.clientID,
+      password: auth.clientSecret
+    }
+  };
+
+  const data = qs.stringify({
+    grant_type:    'refresh_token',
+    refresh_token: refreshToken
+  });
+
+  return axios.post('https://accounts.spotify.com/api/token', data, options);
 }
 
 
@@ -184,25 +182,7 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
 
       originalRequest._retry = true;
 
-      const options: AxiosRequestConfig = {
-        headers: {
-          'Accept':       'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        auth: {
-          username: auth.clientID,
-          password: auth.clientSecret
-        }
-      };
-
-      /* eslint-disable @typescript-eslint/camelcase  */
-      const data = qs.stringify({
-        grant_type:    'refresh_token',
-        refresh_token: refreshToken
-      });
-        /* eslint-enable @typescript-eslint/camelcase  */
-
-      return axios.post('https://accounts.spotify.com/api/token', data, options)
+      return requestAccessToken({ refreshToken })
         .then(res => {
           const newAccessToken = res.data.access_token;
           // TODO Store token

@@ -5,7 +5,7 @@
 
     <div v-if="canConnect">
       <div v-if="profile.isConnected">
-        <button v-on:click="disconnectPlayer">Disconnect you player</button>
+        <button v-on:click="disconnectPlayer">Disconnect your player</button>
       </div>
       <div v-else>
         <button v-on:click="connectPlayer">Connect your player</button>
