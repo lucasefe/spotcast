@@ -1,8 +1,8 @@
-import * as auth                                                                      from './auth';
-import { UserModel }                                                                  from './models/user';
-import axios, { AxiosInstance, AxiosPromise, AxiosRequestConfig, AxiosResponse }      from 'axios';
-import Debug                                                                          from 'debug';
-import qs                                                                             from 'qs';
+import * as auth                                                    from './auth';
+import { UserModel }                                                from './models/user';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse }  from 'axios';
+import Debug                                                        from 'debug';
+import qs                                                           from 'qs';
 import('axios-debug-log');
 
 const debug = Debug('spotify');

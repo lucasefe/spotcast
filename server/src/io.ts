@@ -1,6 +1,7 @@
 import * as spotify              from './spotify';
-import { updateUser, UserModel } from './models/user';
+import { updateUser }            from './models/user';
 import Bluebird                  from 'bluebird';
+import Debug                     from 'debug';
 import http                      from 'http';
 import initSessions              from './ioSession';
 import logger                    from './util/logger';
@@ -8,6 +9,7 @@ import ms                        from 'ms';
 import SessionStore, { Session } from './session_store';
 import sio                       from 'socket.io';
 
+const debug = Debug('sync');
 
 const sessions = new SessionStore();
 
@@ -108,7 +110,8 @@ function updateAndSchedule(sockets): void {
     updatePlayers(sockets)
       .then(function() {
         updateAndSchedule(sockets);
-      });
+      })
+      .catch(logger.error);
   }, ms('2s'));
 }
 
@@ -143,9 +146,17 @@ async function synchronizeListeners(sockets, sessionsListening, player): Promise
     const { username } = session;
     const user         = await updateUser(username);
     if (user && user.currentPlayer) {
-      if (player.isPlaying)
+      const isPlayingSameSong = user.currentPlayer.item.uri === player.item.uri;
+      const isTooApart        = Math.abs(user.currentPlayer.progressMS - player.progressMS) > ms('4s');
+      const shouldPlay        = player.isPlaying && (!isPlayingSameSong || isTooApart);
+      const shouldPause       = !player.isPlaying && user.currentPlayer.isPlaying;
+
+      debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
+
+      if (shouldPlay)
         await spotify.play(user, player.item.uri, player.progressMS);
-      else
+
+      if (shouldPause)
         await spotify.pause(user);
     }
   });
