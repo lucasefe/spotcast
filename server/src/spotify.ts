@@ -170,7 +170,7 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
     return response;
   },
   function(error) {
-    debug(error.response.data.error);
+    debug(error);
     const originalRequest = error.config;
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
