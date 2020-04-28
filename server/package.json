@@ -33,6 +33,7 @@
     "passport-spotify": "^1.1.0",
     "passport.socketio": "^3.7.0",
     "request": "^2.88.2",
+    "rollbar": "^2.15.2",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
     "uuid": "^7.0.2",

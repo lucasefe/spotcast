@@ -101,15 +101,15 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
     });
   }
 
-  updateAndSchedule(sockets);
+  scheduleNextPlayersUpdate(sockets);
   return sockets;
 };
 
-function updateAndSchedule(sockets): void {
+function scheduleNextPlayersUpdate(sockets): void {
   setTimeout(() => {
     updatePlayers(sockets)
       .then(function() {
-        updateAndSchedule(sockets);
+        scheduleNextPlayersUpdate(sockets);
       })
       .catch(logger.error);
   }, ms('2s'));

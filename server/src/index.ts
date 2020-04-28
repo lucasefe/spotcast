@@ -9,6 +9,7 @@ import express                              from 'express';
 import mongoose                             from 'mongoose';
 import morgan                               from 'morgan';
 import passport                             from 'passport';
+import rollbar                              from '../lib/rollbar';
 import session                              from 'express-session';
 
 
@@ -31,6 +32,8 @@ export default function configureServer(): http.Server {
     uri:        mongoURI,
     collection: 'sessions'
   });
+
+  app.use(rollbar.errorHandler());
   app.use(express.static(`${__dirname  }/../public`));
   app.use(cors());
   app.use(cookieParser());

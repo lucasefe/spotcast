@@ -21,6 +21,7 @@ const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const morgan_1 = __importDefault(require("morgan"));
 const passport_1 = __importDefault(require("passport"));
+const rollbar_1 = __importDefault(require("../lib/rollbar"));
 const express_session_1 = __importDefault(require("express-session"));
 /* eslint-disable camelcase */
 require('../lib/router_with_promises');
@@ -37,6 +38,7 @@ function configureServer() {
         uri: mongoURI,
         collection: 'sessions'
     });
+    app.use(rollbar_1.default.errorHandler());
     app.use(express_1.default.static(`${__dirname}/../public`));
     app.use(cors_1.default());
     app.use(cookie_parser_1.default());

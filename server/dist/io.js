@@ -101,14 +101,14 @@ exports.initialize = function (httpServer) {
             }
         });
     }
-    updateAndSchedule(sockets);
+    scheduleNextPlayersUpdate(sockets);
     return sockets;
 };
-function updateAndSchedule(sockets) {
+function scheduleNextPlayersUpdate(sockets) {
     setTimeout(() => {
         updatePlayers(sockets)
             .then(function () {
-            updateAndSchedule(sockets);
+            scheduleNextPlayersUpdate(sockets);
         })
             .catch(logger_1.default.error);
     }, ms_1.default('2s'));
