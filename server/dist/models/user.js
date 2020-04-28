@@ -31,7 +31,7 @@ const UserSchema = new mongoose_1.Schema({
         shuffleState: { type: Boolean },
         repeatState: {
             type: String,
-            enum: ['off', 'track', 'off']
+            enum: ['off', 'track', 'context']
         },
         timestamp: { type: Number },
         context: { type: Object },

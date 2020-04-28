@@ -32,7 +32,7 @@ const UserSchema = new Schema({
     shuffleState:         { type: Boolean },
     repeatState:          {
       type: String,
-      enum: [ 'off', 'track', 'off' ]
+      enum: [ 'off', 'track', 'context' ]
     },
     timestamp:            { type: Number },
     context:              { type: Object },
