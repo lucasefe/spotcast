@@ -26,6 +26,7 @@ const debug_1 = __importDefault(require("debug"));
 const ioSession_1 = __importDefault(require("./ioSession"));
 const logger_1 = __importDefault(require("./util/logger"));
 const ms_1 = __importDefault(require("ms"));
+const rollbar_1 = __importDefault(require("../lib/rollbar"));
 const session_store_1 = __importDefault(require("./session_store"));
 const socket_io_1 = __importDefault(require("socket.io"));
 const debug = debug_1.default('sync');
@@ -107,10 +108,13 @@ exports.initialize = function (httpServer) {
 function scheduleNextPlayersUpdate(sockets) {
     setTimeout(() => {
         updatePlayers(sockets)
-            .then(function () {
+            .finally(function () {
             scheduleNextPlayersUpdate(sockets);
         })
-            .catch(logger_1.default.error);
+            .catch(error => {
+            logger_1.default.error(error);
+            rollbar_1.default.error(error);
+        });
     }, ms_1.default('2s'));
 }
 function updatePlayers(sockets) {
@@ -119,7 +123,8 @@ function updatePlayers(sockets) {
             .getSessions()
             .filter(session => session.username === session.room);
         logger_1.default.debug(`Sessions playing: ${sessionsPlaying.length}`);
-        yield bluebird_1.default.map(sessionsPlaying, function (session) {
+        yield bluebird_1.default.map(sessionsPlaying, updateSession);
+        function updateSession(session) {
             return __awaiter(this, void 0, void 0, function* () {
                 const { username } = session;
                 const { room } = session;
@@ -135,7 +140,7 @@ function updatePlayers(sockets) {
                     yield synchronizeListeners(sockets, sessionsListening, user.currentPlayer);
                 }
             });
-        });
+        }
     });
 }
 function synchronizeListeners(sockets, sessionsListening, player) {

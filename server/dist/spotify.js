@@ -25,9 +25,9 @@ const debug_1 = __importDefault(require("debug"));
 const qs_1 = __importDefault(require("qs"));
 Promise.resolve().then(() => __importStar(require('axios-debug-log')));
 const debug = debug_1.default('spotify');
-function getAccessToken({ refreshToken }) {
+function getAccessToken(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield requestAccessToken({ refreshToken });
+        const response = yield requestAccessToken(user);
         return {
             accessToken: response.data.access_token,
             expiresIn: response.data.expires_in
@@ -35,8 +35,9 @@ function getAccessToken({ refreshToken }) {
     });
 }
 exports.getAccessToken = getAccessToken;
-function getCurrentPlayer({ accessToken }) {
+function getCurrentPlayer(user) {
     return __awaiter(this, void 0, void 0, function* () {
+        const { accessToken } = user;
         const options = {
             headers: {
                 'Accept': 'application/json',
@@ -78,7 +79,8 @@ function pause(user) {
     });
 }
 exports.pause = pause;
-function requestAccessToken({ refreshToken }) {
+function requestAccessToken(user) {
+    const { refreshToken } = user;
     const options = {
         headers: {
             'Accept': 'application/json',
@@ -96,7 +98,7 @@ function requestAccessToken({ refreshToken }) {
     return axios_1.default.post('https://accounts.spotify.com/api/token', data, options);
 }
 function getSpotifyAPIClient(user) {
-    const { accessToken, refreshToken } = user;
+    const { accessToken } = user;
     const instance = axios_1.default.create({
         baseURL: 'https://api.spotify.com/v1',
         timeout: 1000,
@@ -113,7 +115,7 @@ function getSpotifyAPIClient(user) {
         const originalRequest = error.config;
         if (error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
-            return requestAccessToken({ refreshToken })
+            return requestAccessToken(user)
                 .then(res => {
                 const newAccessToken = res.data.access_token;
                 // TODO Store token

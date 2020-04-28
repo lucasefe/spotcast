@@ -62,13 +62,13 @@ export async function updateUser(username): Promise<UserModel | null> {
 
 export async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
   try {
-    const currentPlayer = await spotify.getCurrentPlayer({ accessToken: user.accessToken });
+    const currentPlayer = await spotify.getCurrentPlayer(user);
     return currentPlayer;
   } catch (error) {
     const isUnauthorized = error.response && error.response.status === 401;
     if (isUnauthorized) {
-      const { accessToken } = await spotify.getAccessToken({ refreshToken: user.refreshToken });
-      const currentPlayer   = await spotify.getCurrentPlayer({ accessToken });
+      const { accessToken } = await spotify.getAccessToken(user);
+      const currentPlayer   = await spotify.getCurrentPlayer(user);
       user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
       await user.save();
       return currentPlayer;

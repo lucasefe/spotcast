@@ -6,6 +6,7 @@ import http                      from 'http';
 import initSessions              from './ioSession';
 import logger                    from './util/logger';
 import ms                        from 'ms';
+import rollbar                   from '../lib/rollbar';
 import SessionStore, { Session } from './session_store';
 import sio                       from 'socket.io';
 
@@ -108,10 +109,13 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
 function scheduleNextPlayersUpdate(sockets): void {
   setTimeout(() => {
     updatePlayers(sockets)
-      .then(function() {
+      .finally(function() {
         scheduleNextPlayersUpdate(sockets);
       })
-      .catch(logger.error);
+      .catch(error => {
+        logger.error(error);
+        rollbar.error(error);
+      });
   }, ms('2s'));
 }
 
@@ -122,7 +126,9 @@ async function updatePlayers(sockets): Promise<void> {
     .filter(session => session.username === session.room);
 
   logger.debug(`Sessions playing: ${sessionsPlaying.length}`);
-  await Bluebird.map(sessionsPlaying, async function(session) {
+  await Bluebird.map(sessionsPlaying, updateSession);
+
+  async function updateSession(session): Promise<void> {
     const { username } = session;
     const { room }     = session;
     const user         = await updateUser(username);
@@ -138,7 +144,7 @@ async function updatePlayers(sockets): Promise<void> {
       logger.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
       await synchronizeListeners(sockets, sessionsListening, user.currentPlayer);
     }
-  });
+  }
 }
 
 async function synchronizeListeners(sockets, sessionsListening, player): Promise<void> {

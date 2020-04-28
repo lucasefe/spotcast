@@ -89,15 +89,17 @@ export interface CurrentPlayerResponse {
   isPlaying: boolean;
 }
 
-export async function getAccessToken({ refreshToken }: GetAccessTokenParams): Promise<RefreshAccessTokenResponse> {
-  const response = await requestAccessToken({ refreshToken });
+export async function getAccessToken(user): Promise<RefreshAccessTokenResponse> {
+  const response = await requestAccessToken(user);
   return {
     accessToken: response.data.access_token,
     expiresIn:   response.data.expires_in
   };
 }
 
-export async function getCurrentPlayer({ accessToken }: GetCurrentPlayerParams): Promise<CurrentPlayerResponse> {
+export async function getCurrentPlayer(user: UserModel): Promise<CurrentPlayerResponse> {
+  const { accessToken } = user;
+
   const options: AxiosRequestConfig = {
     headers: {
       'Accept':        'application/json',
@@ -139,7 +141,9 @@ export async function pause(user: UserModel): Promise<void> {
 }
 
 
-function requestAccessToken({ refreshToken }): Promise<AxiosResponse> {
+function requestAccessToken(user): Promise<AxiosResponse> {
+  const { refreshToken } = user;
+
   const options: AxiosRequestConfig = {
     headers: {
       'Accept':       'application/json',
@@ -161,8 +165,8 @@ function requestAccessToken({ refreshToken }): Promise<AxiosResponse> {
 
 
 function getSpotifyAPIClient(user: UserModel): AxiosInstance {
-  const { accessToken, refreshToken } = user;
-  const instance                      = axios.create({
+  const { accessToken } = user;
+  const instance        = axios.create({
     baseURL: 'https://api.spotify.com/v1',
     timeout: 1000,
     headers: {
@@ -182,7 +186,7 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
 
       originalRequest._retry = true;
 
-      return requestAccessToken({ refreshToken })
+      return requestAccessToken(user)
         .then(res => {
           const newAccessToken = res.data.access_token;
           // TODO Store token

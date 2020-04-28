@@ -60,14 +60,14 @@ exports.updateUser = updateUser;
 function getCurrentPlayer(user) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const currentPlayer = yield spotify.getCurrentPlayer({ accessToken: user.accessToken });
+            const currentPlayer = yield spotify.getCurrentPlayer(user);
             return currentPlayer;
         }
         catch (error) {
             const isUnauthorized = error.response && error.response.status === 401;
             if (isUnauthorized) {
-                const { accessToken } = yield spotify.getAccessToken({ refreshToken: user.refreshToken });
-                const currentPlayer = yield spotify.getCurrentPlayer({ accessToken });
+                const { accessToken } = yield spotify.getAccessToken(user);
+                const currentPlayer = yield spotify.getCurrentPlayer(user);
                 user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
                 yield user.save();
                 return currentPlayer;
