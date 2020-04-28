@@ -13,7 +13,7 @@
     </div>
   </div>
   <div v-else>
-    No player found. Looks like {{ session.name }} is not playing any music. :-(
+    No player found. Looks like {{ session.name }} is not playing any music at the moment :-(
   </div>
 </template>
 
