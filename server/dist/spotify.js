@@ -27,7 +27,23 @@ Promise.resolve().then(() => __importStar(require('axios-debug-log')));
 const debug = debug_1.default('spotify');
 function getAccessToken(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield requestAccessToken(user);
+        debug(`Getting access token for user ${user.username}`);
+        const { refreshToken } = user;
+        const options = {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            auth: {
+                username: auth.clientID,
+                password: auth.clientSecret
+            }
+        };
+        const data = qs_1.default.stringify({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+        });
+        const response = yield axios_1.default.post('https://accounts.spotify.com/api/token', data, options);
         return {
             accessToken: response.data.access_token,
             expiresIn: response.data.expires_in
@@ -45,7 +61,8 @@ function getCurrentPlayer(user) {
                 'Authorization': `Bearer ${accessToken}`
             }
         };
-        const response = yield axios_1.default.get('https://api.spotify.com/v1/me/player', options);
+        const instance = getSpotifyAPIClient(user);
+        const response = yield instance.get('/me/player', options);
         return {
             device: response.data.device,
             shuffleState: response.data.shuffle_state,
@@ -79,24 +96,6 @@ function pause(user) {
     });
 }
 exports.pause = pause;
-function requestAccessToken(user) {
-    const { refreshToken } = user;
-    const options = {
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        auth: {
-            username: auth.clientID,
-            password: auth.clientSecret
-        }
-    };
-    const data = qs_1.default.stringify({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken
-    });
-    return axios_1.default.post('https://accounts.spotify.com/api/token', data, options);
-}
 function getSpotifyAPIClient(user) {
     const { accessToken } = user;
     const instance = axios_1.default.create({
@@ -115,17 +114,10 @@ function getSpotifyAPIClient(user) {
         const originalRequest = error.config;
         if (error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
-            return requestAccessToken(user)
-                .then(res => {
-                const newAccessToken = res.data.access_token;
-                // TODO Store token
-                // const expiresIn      = res.data.expires_in;
-                if (res.status === 200) {
-                    originalRequest.headers.common.Authorization = `Bearer ${newAccessToken}`;
-                    return axios_1.default(originalRequest);
-                }
-                else
-                    return res;
+            return refreshAccessToken(user)
+                .then(newAccessToken => {
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return axios_1.default(originalRequest);
             });
         }
         else if (error.response.status === 404)
@@ -134,5 +126,14 @@ function getSpotifyAPIClient(user) {
             return Promise.reject(error);
     });
     return instance;
+}
+function refreshAccessToken(user) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { accessToken: newAccessToken, expiresIn } = yield getAccessToken(user);
+        debug(`Saving access token for user ${user.username}`);
+        user.set({ accessToken: newAccessToken, expiresIn });
+        yield user.save();
+        return newAccessToken;
+    });
 }
 //# sourceMappingURL=spotify.js.map

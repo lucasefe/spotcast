@@ -1,8 +1,8 @@
-import * as auth                                                    from './auth';
-import { UserModel }                                                from './models/user';
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse }  from 'axios';
-import Debug                                                        from 'debug';
-import qs                                                           from 'qs';
+import * as auth                                    from './auth';
+import { UserModel }                                from './models/user';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import Debug                                        from 'debug';
+import qs                                           from 'qs';
 import('axios-debug-log');
 
 const debug = Debug('spotify');
@@ -64,18 +64,11 @@ export interface CurrentPlayer {
   isPlaying: boolean;
 }
 
-interface GetAccessTokenParams {
-  refreshToken: string;
-}
-
 interface RefreshAccessTokenResponse {
   accessToken: string;
   expiresIn: number;
 }
 
-interface GetCurrentPlayerParams {
-  accessToken: string;
-}
 
 export interface CurrentPlayerResponse {
   device: Record<string, any>;
@@ -90,7 +83,27 @@ export interface CurrentPlayerResponse {
 }
 
 export async function getAccessToken(user): Promise<RefreshAccessTokenResponse> {
-  const response = await requestAccessToken(user);
+  debug(`Getting access token for user ${user.username}`);
+  const { refreshToken } = user;
+
+  const options: AxiosRequestConfig = {
+    headers: {
+      'Accept':       'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    auth: {
+      username: auth.clientID,
+      password: auth.clientSecret
+    }
+  };
+
+  const data = qs.stringify({
+    grant_type:    'refresh_token',
+    refresh_token: refreshToken
+  });
+
+  const response = await axios.post('https://accounts.spotify.com/api/token', data, options);
+
   return {
     accessToken: response.data.access_token,
     expiresIn:   response.data.expires_in
@@ -108,7 +121,8 @@ export async function getCurrentPlayer(user: UserModel): Promise<CurrentPlayerRe
     }
   };
 
-  const response = await axios.get('https://api.spotify.com/v1/me/player', options);
+  const instance = getSpotifyAPIClient(user);
+  const response = await instance.get('/me/player', options);
 
   return {
     device:               response.data.device,
@@ -140,30 +154,6 @@ export async function pause(user: UserModel): Promise<void> {
   await instance.put('/me/player/pause');
 }
 
-
-function requestAccessToken(user): Promise<AxiosResponse> {
-  const { refreshToken } = user;
-
-  const options: AxiosRequestConfig = {
-    headers: {
-      'Accept':       'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    auth: {
-      username: auth.clientID,
-      password: auth.clientSecret
-    }
-  };
-
-  const data = qs.stringify({
-    grant_type:    'refresh_token',
-    refresh_token: refreshToken
-  });
-
-  return axios.post('https://accounts.spotify.com/api/token', data, options);
-}
-
-
 function getSpotifyAPIClient(user: UserModel): AxiosInstance {
   const { accessToken } = user;
   const instance        = axios.create({
@@ -183,20 +173,14 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
     debug(error.response.data.error);
     const originalRequest = error.config;
     if (error.response.status === 401 && !originalRequest._retry) {
-
       originalRequest._retry = true;
 
-      return requestAccessToken(user)
-        .then(res => {
-          const newAccessToken = res.data.access_token;
-          // TODO Store token
-          // const expiresIn      = res.data.expires_in;
-          if (res.status === 200) {
-            originalRequest.headers.common.Authorization = `Bearer ${  newAccessToken}`;
-            return axios(originalRequest);
-          } else
-            return res;
+      return refreshAccessToken(user)
+        .then(newAccessToken => {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return axios(originalRequest);
         });
+
     } else if (error.response.status === 404)
       return Promise.reject('NoDevice');
     else
@@ -204,4 +188,13 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
   });
 
   return instance;
+}
+
+async function refreshAccessToken(user: UserModel): Promise<string> {
+  const { accessToken: newAccessToken, expiresIn } = await getAccessToken(user);
+
+  debug(`Saving access token for user ${user.username}`);
+  user.set({ accessToken: newAccessToken, expiresIn });
+  await user.save();
+  return newAccessToken;
 }
