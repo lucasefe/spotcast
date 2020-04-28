@@ -8,6 +8,10 @@ Server
 
     g ls-files | DEBUG=auth,spotify,axios,sync  entr -cr yarn watch
 
+    #  or
+
+    fd -e ts | DEBUG=auth,spotify,axios,sync  entr -cr yarn watch
+
 Client 
 
     yarn watch
