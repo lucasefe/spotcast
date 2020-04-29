@@ -4,10 +4,10 @@
 
     <div v-if="canConnect">
       <div v-if="profile.isConnected">
-        <button v-on:click="disconnectPlayer">Disconnect your player</button>
+        <button class="button is-outlined" v-on:click="disconnectPlayer">Disconnect your player</button>
       </div>
       <div v-else>
-        <button v-on:click="connectPlayer">Connect your player</button>
+        <button class="button is-outlined" v-on:click="connectPlayer">Connect your player</button>
       </div>
     </div>
     <div v-if="!profile.canPlay">
