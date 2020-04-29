@@ -6,9 +6,11 @@ export interface Session {
   socket: sio.Socket;
   username: string;
   name: string;
-  isConnected: boolean;
   room?: string;
   currentPlayer?: spotify.CurrentPlayer;
+
+  isConnected: boolean;
+  canPlay: boolean;
 }
 
 
@@ -31,6 +33,7 @@ export default class SessionStore {
       session.username    = user.username;
       session.name        = user.name;
       session.isConnected = false;
+      session.canPlay     = false;
       session.room        = undefined;
       return session;
     } else {
@@ -45,7 +48,8 @@ export default class SessionStore {
       socket,
       username:    user.username,
       name:        user.name,
-      isConnected: false
+      isConnected: false,
+      canPlay:     false
     };
   }
 

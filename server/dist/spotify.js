@@ -112,7 +112,7 @@ function getSpotifyAPIClient(user) {
     }, function (error) {
         debug(error);
         const originalRequest = error.config;
-        if (error.response.status === 401 && !originalRequest._retry) {
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             return refreshAccessToken(user)
                 .then(newAccessToken => {
@@ -120,8 +120,6 @@ function getSpotifyAPIClient(user) {
                 return axios_1.default(originalRequest);
             });
         }
-        else if (error.response.status === 404)
-            return Promise.reject('NoDevice');
         else
             return Promise.reject(error);
     });

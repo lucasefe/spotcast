@@ -45,18 +45,24 @@ const User = mongoose_1.default.model('User', UserSchema);
 exports.default = User;
 function updateUser(username) {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = yield User.findOne({ username });
-        if (user) {
-            const currentPlayer = yield getCurrentPlayer(user);
-            user.set({ currentPlayer });
-            yield user.save();
-            return user;
-        }
-        else
-            return null;
+        const user = yield findUser(username);
+        const currentPlayer = yield getCurrentPlayer(user);
+        user.set({ currentPlayer });
+        yield user.save();
+        return user;
     });
 }
 exports.updateUser = updateUser;
+function findUser(username) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = yield User.findOne({ username });
+        if (user)
+            return user;
+        else
+            throw new Error(`User not found: ${username}`);
+    });
+}
+exports.findUser = findUser;
 function getCurrentPlayer(user) {
     return __awaiter(this, void 0, void 0, function* () {
         try {

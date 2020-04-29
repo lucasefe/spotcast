@@ -17,7 +17,7 @@ export default {
     Profile
   },
   sockets: {
-    PROFILE_UPDATED: function({ profile }) {
+    SESSION_UPDATED: function({ profile }) {
       this.username = profile.username;
       this.name = profile.name;
       this.room = profile.room;

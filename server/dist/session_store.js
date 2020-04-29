@@ -15,6 +15,7 @@ class SessionStore {
             session.username = user.username;
             session.name = user.name;
             session.isConnected = false;
+            session.canPlay = false;
             session.room = undefined;
             return session;
         }
@@ -29,7 +30,8 @@ class SessionStore {
             socket,
             username: user.username,
             name: user.name,
-            isConnected: false
+            isConnected: false,
+            canPlay: false
         };
     }
     removeSession(socket) {

@@ -1,5 +1,5 @@
 import * as spotify              from './spotify';
-import { updateUser }            from './models/user';
+import { findUser, updateUser }  from './models/user';
 import Bluebird                  from 'bluebird';
 import Debug                     from 'debug';
 import http                      from 'http';
@@ -57,7 +57,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         if (session) {
           session.isConnected = true;
           logger.debug(`User ${session.username} connected player to ${session.room}. `);
-          emitProfileUpdated(socket, session);
+          emitSessionUpdated(session);
         }
       });
 
@@ -66,7 +66,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         if (session) {
           session.isConnected = false;
           logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
-          emitProfileUpdated(socket, session);
+          emitSessionUpdated(session);
         }
       });
 
@@ -87,7 +87,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         session.room = room;
         socket.join(room);
 
-        emitProfileUpdated(socket, session);
+        emitSessionUpdated(session);
         emitRoomMembersUpdated(sockets, room);
       }
 
@@ -113,56 +113,80 @@ function scheduleNextPlayersUpdate(sockets): void {
         scheduleNextPlayersUpdate(sockets);
       })
       .catch(error => {
-        logger.error(error);
-        rollbar.error(error);
+        handlerError(sockets, error);
       });
   }, ms('2s'));
 }
 
+function handlerError(sockets, error): void {
+  debug({ error });
+  logger.error(error);
+  rollbar.error(error);
+}
 
 async function updatePlayers(sockets): Promise<void> {
   const sessionsPlaying = sessions
     .getSessions()
-    .filter(session => session.username === session.room);
-
+    .filter(isPlaying);
   logger.debug(`Sessions playing: ${sessionsPlaying.length}`);
-  await Bluebird.map(sessionsPlaying, updateSession);
 
-  async function updateSession(session): Promise<void> {
-    const { username } = session;
-    const { room }     = session;
-    const user         = await updateUser(username);
-    if (user) {
-      session.currentPlayer = user.currentPlayer;
-      const playerContext   = getPlayerContext(session);
-      emitPlayerUpdated(sockets, room, playerContext);
+  const sessionsListening = sessions
+    .getSessions()
+    .filter(isListening);
 
-      const sessionsListening = sessions
-        .getSessions()
-        .filter(s => s.username !== room && s.room === room && s.isConnected);
+  logger.debug(`Sessions listening ${sessionsListening.length}`);
+  const activeSessions = [ ...sessionsPlaying, ...sessionsListening ];
+  await Bluebird.map(activeSessions, updateSession, { concurrency: 10 });
 
-      logger.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
-      await synchronizeListeners(sockets, sessionsListening, user.currentPlayer);
-    }
-  }
+  await Bluebird.map(sessionsPlaying, async function(session) {
+    const { username }    = session;
+    const { room }        = session;
+    const user            = await findUser(username);
+    session.currentPlayer = user.currentPlayer;
+    const playerContext   = getPlayerContext(session);
+    emitPlayerUpdated(sockets, room, playerContext);
+
+    await synchronizeListeners(sockets, sessionsListening, user.currentPlayer);
+  });
+}
+
+function isPlaying(session): boolean {
+  return session.username === session.room;
+}
+
+function isListening(session): boolean {
+  return session.username !== session.room;
+}
+
+async function updateSession(session): Promise<void> {
+  const { username } = session;
+  const user         = await updateUser(username);
+  const canPlay      = !!(user && user.currentPlayer && user.currentPlayer.device);
+  debug({ username, canPlay });
+  const statusChanged   = session.canPlay !== canPlay;
+  session.canPlay       = canPlay;
+  session.currentPlayer = user.currentPlayer;
+
+  if (statusChanged)
+    emitSessionUpdated(session);
+
 }
 
 async function synchronizeListeners(sockets, sessionsListening, player): Promise<void> {
   await Bluebird.map(sessionsListening, async function(session) {
     const { username } = session;
-    const user         = await updateUser(username);
-    if (user && user.currentPlayer) {
-      const isPlayingSameSong = user.currentPlayer.item.uri === player.item.uri;
-      const isTooApart        = Math.abs(user.currentPlayer.progressMS - player.progressMS) > ms('4s');
+    const user         = await findUser(username);
+    if (session.canPlay && session.isConnected) {
+      const isPlayingSameSong = session.currentPlayer.item.uri === player.item.uri;
+      const isTooApart        = Math.abs(session.currentPlayer.progressMS - player.progressMS) > ms('4s');
       const shouldPlay        = player.isPlaying && (!isPlayingSameSong || isTooApart);
-      const shouldPause       = !player.isPlaying && user.currentPlayer.isPlaying;
+      const shouldPause       = !player.isPlaying && session.currentPlayer.isPlaying;
 
       debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
 
       if (shouldPlay)
         await spotify.play(user, player.item.uri, player.progressMS);
-
-      if (shouldPause)
+      else if (shouldPause)
         await spotify.pause(user);
     }
   });
@@ -172,6 +196,7 @@ interface SessionResponse {
   username: string;
   name: string;
   isConnected: boolean;
+  canPlay: boolean;
 }
 
 
@@ -182,10 +207,11 @@ interface ProfileResponse extends SessionResponse {
 
 function sessionToJSON(session: Session): SessionResponse {
   const { isConnected } = session;
+  const { canPlay }     = session;
   const { username }    = session;
   const { name }        = session;
 
-  return { username, name, isConnected };
+  return { username, name, isConnected, canPlay };
 }
 
 
@@ -262,11 +288,16 @@ function emitRoomMembersUpdated(sockets, room): void {
 }
 
 
-function emitProfileUpdated(socket, session): void {
-  socket.emit('PROFILE_UPDATED', { profile: sessionToProfileJSON(session) });
+function emitSessionUpdated(session): void {
+  session.socket.emit('SESSION_UPDATED', { profile: sessionToProfileJSON(session) });
 }
 
 
 function emitPlayerUpdated(sockets, room, playerContext): void {
   sockets.in(room).emit('PLAYER_UPDATED', playerContext);
+}
+
+function emitSessionError(session, errorMessage): void {
+  const socket = session.socket;
+  socket.emit('PLAYER_ERROR', { errorMessage  });
 }

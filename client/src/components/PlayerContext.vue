@@ -11,6 +11,9 @@
         <button v-on:click="connectPlayer">Connect your player</button>
       </div>
     </div>
+    <div v-if="!profile.canPlay">
+      Looks like you can't play. Maybe open Spotify, or if you are using the web version, play something.
+    </div>
   </div>
   <div v-else>
     No player found. Looks like {{ session.name }} is not playing any music at the moment :-(
@@ -25,12 +28,16 @@
       Player,
     },
     sockets: {
-      PROFILE_UPDATED: function({ profile }) {
+      SESSION_UPDATED: function({ profile }) {
         this.profile = profile
       },
-      PLAYER_UPDATED: function({ player, session}) {
+      PLAYER_UPDATED: function({ player, session }) {
         this.player = player;
         this.session = session;
+      },
+      PLAYER_ERROR: function({ errorMessage }) {
+        console.log(errorMessage);
+        this.disconnectPlayer();
       },
       MEMBERS_UPDATED: function(socket_data) {
         this.members = socket_data.members;
@@ -61,7 +68,8 @@
     },
     computed:{
       canConnect: function() {
-        return this.profile.username !== this.session.username;
+        const isTheirRoom = this.profile.username === this.session.username;
+        return !isTheirRoom && this.profile.canPlay;
       }
     }
   }

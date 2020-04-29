@@ -1,8 +1,8 @@
-import * as auth                                    from './auth';
-import { UserModel }                                from './models/user';
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import Debug                                        from 'debug';
-import qs                                           from 'qs';
+import * as auth                                      from './auth';
+import { UserModel }                                  from './models/user';
+import axios, { AxiosInstance, AxiosRequestConfig }   from 'axios';
+import Debug                                          from 'debug';
+import qs                                             from 'qs';
 import('axios-debug-log');
 
 const debug = Debug('spotify');
@@ -172,7 +172,7 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
   function(error) {
     debug(error);
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       return refreshAccessToken(user)
@@ -180,10 +180,7 @@ function getSpotifyAPIClient(user: UserModel): AxiosInstance {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return axios(originalRequest);
         });
-
-    } else if (error.response.status === 404)
-      return Promise.reject('NoDevice');
-    else
+    } else
       return Promise.reject(error);
   });
 

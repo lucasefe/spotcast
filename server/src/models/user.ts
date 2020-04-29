@@ -48,15 +48,21 @@ const User = mongoose.model<UserModel>('User', UserSchema);
 
 export default User;
 
-export async function updateUser(username): Promise<UserModel | null> {
+export async function updateUser(username): Promise<UserModel> {
+  const user          = await findUser(username);
+  const currentPlayer = await getCurrentPlayer(user);
+  user.set({ currentPlayer });
+  await user.save();
+  return user;
+}
+
+
+export async function findUser(username): Promise<UserModel> {
   const user = await User.findOne({ username });
-  if (user) {
-    const currentPlayer = await getCurrentPlayer(user);
-    user.set({ currentPlayer });
-    await user.save();
+  if (user)
     return user;
-  } else
-    return null;
+  else
+    throw new Error(`User not found: ${username}`);
 }
 
 
