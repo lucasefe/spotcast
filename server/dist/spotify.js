@@ -100,7 +100,7 @@ function getSpotifyAPIClient(user) {
     const { accessToken } = user;
     const instance = axios_1.default.create({
         baseURL: 'https://api.spotify.com/v1',
-        timeout: 1000,
+        timeout: 5000,
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
