@@ -6,7 +6,10 @@
           <td>
             {{ member.name }}
           </td>
-          <td v-if="member.isConnected">
+          <td v-if="session.username === member.username">
+            playing
+          </td>
+          <td v-else-if="member.isConnected">
             connected
           </td>
           <td v-else>

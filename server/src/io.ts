@@ -58,6 +58,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           session.isConnected = true;
           logger.debug(`User ${session.username} connected player to ${session.room}. `);
           emitSessionUpdated(session);
+          emitRoomMembersUpdated(sockets, session.room);
         }
       });
 
@@ -67,6 +68,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           session.isConnected = false;
           logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
           emitSessionUpdated(session);
+          emitRoomMembersUpdated(sockets, session.room);
         }
       });
 

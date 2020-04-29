@@ -66,6 +66,7 @@ exports.initialize = function (httpServer) {
                     session.isConnected = true;
                     logger_1.default.debug(`User ${session.username} connected player to ${session.room}. `);
                     emitSessionUpdated(session);
+                    emitRoomMembersUpdated(sockets, session.room);
                 }
             });
             socket.on('DISCONNECT_PLAYER', function () {
@@ -74,6 +75,7 @@ exports.initialize = function (httpServer) {
                     session.isConnected = false;
                     logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
                     emitSessionUpdated(session);
+                    emitRoomMembersUpdated(sockets, session.room);
                 }
             });
             function joinRoom(session, room) {
