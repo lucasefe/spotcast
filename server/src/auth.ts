@@ -8,7 +8,7 @@ export const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
 export const  clientSecret = '76c34e6e20f4410685724966258e03ee';
 
 const callbackURL = process.env.NODE_ENV === 'production' ?
-  'http://fogon.herokuapp.com/login/callback' :
+  'http://fogon.lucasefe.me/login/callback' :
   'http://localhost:3000/login/callback';
 
 const debug = Debug('auth');

@@ -20,7 +20,7 @@ const user_1 = __importDefault(require("./models/user"));
 exports.clientID = '83ccfd2305cc4bc4956138041b97e3a9';
 exports.clientSecret = '76c34e6e20f4410685724966258e03ee';
 const callbackURL = process.env.NODE_ENV === 'production' ?
-    'http://fogon.herokuapp.com/login/callback' :
+    'http://fogon.lucasefe.me/login/callback' :
     'http://localhost:3000/login/callback';
 const debug = debug_1.default('auth');
 const SpotifyStrategy = passport_spotify_1.default.Strategy;
