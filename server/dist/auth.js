@@ -25,7 +25,6 @@ const callbackURL = process.env.NODE_ENV === 'production' ?
 const debug = debug_1.default('auth');
 const SpotifyStrategy = passport_spotify_1.default.Strategy;
 const spotifyStrategy = new SpotifyStrategy({ clientID: exports.clientID, clientSecret: exports.clientSecret, callbackURL }, function onSuccessAuth(accessToken, refreshToken, expiresIn, profile, done) {
-    debug({ profile });
     const photoURL = profile.photos && profile.photos[0];
     const name = profile.displayName;
     findOrInitializeUser(profile.id)

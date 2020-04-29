@@ -17,7 +17,6 @@ const debug = Debug('auth');
 const SpotifyStrategy = PassportSpotify.Strategy;
 const spotifyStrategy = new SpotifyStrategy({ clientID, clientSecret, callbackURL },
   function onSuccessAuth(accessToken, refreshToken, expiresIn, profile, done): void{
-    debug({ profile });
     const photoURL = profile.photos && profile.photos[0];
     const name     = profile.displayName;
 
