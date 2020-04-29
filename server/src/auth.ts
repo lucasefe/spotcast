@@ -17,6 +17,7 @@ const debug = Debug('auth');
 const SpotifyStrategy = PassportSpotify.Strategy;
 const spotifyStrategy = new SpotifyStrategy({ clientID, clientSecret, callbackURL },
   function onSuccessAuth(accessToken, refreshToken, expiresIn, profile, done): void{
+    debug({ profile });
     const photoURL = profile.photos && profile.photos[0];
     const name     = profile.displayName;
 
@@ -34,7 +35,6 @@ const spotifyStrategy = new SpotifyStrategy({ clientID, clientSecret, callbackUR
 
 
 const spotifyScopes = [
-  'user-read-email',
   'user-modify-playback-state',
   'user-read-playback-state',
   'user-read-currently-playing'
@@ -62,12 +62,14 @@ passport.deserializeUser((id, done) => {
     done(new Error(`Expected id to be a string when serializing: ${id}`));
 });
 
+
 export const routes = express();
 
 routes.get('/login', passport.authenticate('spotify', { scope: spotifyScopes, showDialog: true }), function() {});
 
 routes.get('/login/callback', passport.authenticate('spotify', { failureRedirect: '/' }), function(req, res) {
-  res.redirect('/');
+  const returnTo = req.session.returnTo ? req.session.returnTo : '/';
+  res.redirect(returnTo);
 });
 
 async function findOrInitializeUser(username): Promise<UserModel> {

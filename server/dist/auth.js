@@ -25,6 +25,7 @@ const callbackURL = process.env.NODE_ENV === 'production' ?
 const debug = debug_1.default('auth');
 const SpotifyStrategy = passport_spotify_1.default.Strategy;
 const spotifyStrategy = new SpotifyStrategy({ clientID: exports.clientID, clientSecret: exports.clientSecret, callbackURL }, function onSuccessAuth(accessToken, refreshToken, expiresIn, profile, done) {
+    debug({ profile });
     const photoURL = profile.photos && profile.photos[0];
     const name = profile.displayName;
     findOrInitializeUser(profile.id)
@@ -38,7 +39,6 @@ const spotifyStrategy = new SpotifyStrategy({ clientID: exports.clientID, client
     });
 });
 const spotifyScopes = [
-    'user-read-email',
     'user-modify-playback-state',
     'user-read-playback-state',
     'user-read-currently-playing'
@@ -65,7 +65,8 @@ passport_1.default.deserializeUser((id, done) => {
 exports.routes = express_1.default();
 exports.routes.get('/login', passport_1.default.authenticate('spotify', { scope: spotifyScopes, showDialog: true }), function () { });
 exports.routes.get('/login/callback', passport_1.default.authenticate('spotify', { failureRedirect: '/' }), function (req, res) {
-    res.redirect('/');
+    const returnTo = req.session.returnTo ? req.session.returnTo : '/';
+    res.redirect(returnTo);
 });
 function findOrInitializeUser(username) {
     return __awaiter(this, void 0, void 0, function* () {
