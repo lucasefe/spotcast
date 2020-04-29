@@ -1,7 +1,6 @@
 <template>
   <div v-if="player">
     <Player v-bind:player="player"></Player>
-    <b-table :data="members" :columns="columns"></b-table>
 
     <div v-if="canConnect">
       <div v-if="profile.isConnected">
@@ -38,24 +37,13 @@
       PLAYER_ERROR: function({ errorMessage }) {
         console.log(errorMessage);
         this.disconnectPlayer();
-      },
-      MEMBERS_UPDATED: function(socket_data) {
-        this.members = socket_data.members;
       }
     },
 
     data: () => ({
       player: '',
       session: '',
-      members: '',
-      profile: '',
-      columns: [
-        {
-          field: 'name',
-          label: '',
-          width: '40'
-        }
-      ]
+      profile: ''
     }),
 
     methods: {

@@ -8,8 +8,8 @@
           </figure>
         </div>
         <div class="media-content">
-          <p class="title is-4">{{player.trackName }}</p>
-          <p class="subtitle is-6"> {{ player.artistName }}</p>
+          <p class="title is-4">{{player.trackName}}</p>
+          <p class="subtitle is-6"> {{player.artistName}}</p>
         </div>
       </div>
       <div class="content">
