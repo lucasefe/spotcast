@@ -26,6 +26,7 @@
 
         <div class="tile is-parent is-4">
           <article class="tile is-child box">
+            <Chat></Chat>
           </article>
         </div>
       </div>
@@ -35,12 +36,14 @@
 
 <script>
 
+import Chat from "../components/Chat.vue";
 import Profile from "../components/Profile.vue";
 import PlayerMembers from "../components/PlayerMembers.vue"
 import PlayerState from "../components/PlayerState.vue"
 
 export default {
   components: {
+    Chat,
     PlayerMembers,
     PlayerState,
     Profile

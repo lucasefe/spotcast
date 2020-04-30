@@ -21,6 +21,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const spotify = __importStar(require("./spotify"));
 const user_1 = require("./models/user");
+const uuid_1 = require("uuid");
 const bluebird_1 = __importDefault(require("bluebird"));
 const debug_1 = __importDefault(require("debug"));
 const ioSession_1 = __importDefault(require("./ioSession"));
@@ -59,6 +60,17 @@ exports.initialize = function (httpServer) {
                 const session = sessions.getSession(socket);
                 if (session)
                     joinRoom(session, room);
+            });
+            socket.on('SEND_MESSAGE', function ({ text }) {
+                const session = sessions.getSession(socket);
+                if (session) {
+                    emitNewMessage(sockets, session.room, {
+                        id: uuid_1.v4(),
+                        timestamp: new Date().toISOString(),
+                        from: session.name,
+                        text
+                    });
+                }
             });
             socket.on('CONNECT_PLAYER', function () {
                 const session = sessions.getSession(socket);
@@ -249,5 +261,8 @@ function emitSessionUpdated(session) {
 }
 function emitPlayerUpdated(sockets, room, playerContext) {
     sockets.in(room).emit('PLAYER_UPDATED', playerContext);
+}
+function emitNewMessage(sockets, room, message) {
+    sockets.in(room).emit('NEW_MESSAGE', { message });
 }
 //# sourceMappingURL=io.js.map

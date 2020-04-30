@@ -1,14 +1,15 @@
-import * as spotify              from './spotify';
-import { findUser, updateUser }  from './models/user';
-import Bluebird                  from 'bluebird';
-import Debug                     from 'debug';
-import http                      from 'http';
-import initSessions              from './ioSession';
-import logger                    from './util/logger';
-import ms                        from 'ms';
-import rollbar                   from '../lib/rollbar';
-import SessionStore, { Session } from './session_store';
-import sio                       from 'socket.io';
+import * as spotify               from './spotify';
+import { findUser, updateUser }   from './models/user';
+import { v4 as uuid }             from 'uuid';
+import Bluebird                   from 'bluebird';
+import Debug                      from 'debug';
+import http                       from 'http';
+import initSessions               from './ioSession';
+import logger                     from './util/logger';
+import ms                         from 'ms';
+import rollbar                    from '../lib/rollbar';
+import SessionStore, { Session }  from './session_store';
+import sio                        from 'socket.io';
 
 const debug = Debug('sync');
 
@@ -50,6 +51,19 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         const session = sessions.getSession(socket);
         if (session)
           joinRoom(session, room);
+      });
+
+
+      socket.on('SEND_MESSAGE', function({ text }) {
+        const session = sessions.getSession(socket);
+        if (session) {
+          emitNewMessage(sockets, session.room, {
+            id:        uuid(),
+            timestamp: new Date().toISOString(),
+            from:      session.name,
+            text
+          });
+        }
       });
 
       socket.on('CONNECT_PLAYER', function() {
@@ -302,4 +316,8 @@ function emitSessionUpdated(session): void {
 
 function emitPlayerUpdated(sockets, room, playerContext): void {
   sockets.in(room).emit('PLAYER_UPDATED', playerContext);
+}
+
+function emitNewMessage(sockets, room, message): void {
+  sockets.in(room).emit('NEW_MESSAGE', { message });
 }
