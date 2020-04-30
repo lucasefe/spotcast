@@ -141,8 +141,8 @@ function updatePlayers(sockets) {
                 const { room } = session;
                 const user = yield user_1.findUser(username);
                 session.currentPlayer = user.currentPlayer;
-                const playerContext = getPlayerContext(session);
-                emitPlayerUpdated(sockets, room, playerContext);
+                const player = getPlayerState(session);
+                emitPlayerUpdated(sockets, room, player);
                 yield synchronizeListeners(sockets, sessionsListening, user.currentPlayer);
             });
         });
@@ -199,24 +199,33 @@ function sessionToProfileJSON(session) {
     const json = Object.assign(Object.assign({}, sessionToJSON(session)), { room: session.room });
     return json;
 }
-function getPlayerContext(session) {
+function getPlayerState(session) {
     return {
-        session: sessionToJSON(session),
-        player: playerToJSON(session.currentPlayer)
+        session: {
+            name: session.name,
+            username: session.username
+        },
+        player: getPlayer(session.currentPlayer)
     };
 }
-function playerToJSON(player) {
+function getPlayer(player) {
     if (player && player.item) {
         const trackName = player.item.name;
         const trackProgress = player.progressMS * 100 / player.item.duration_ms;
         const albumName = player.item.album.name;
         const artistName = player.item.artists.map(a => a.name).join(', ');
         const albumCoverURL = player.item.album.images[0].url;
-        const isPlaying = player.isPlaying;
-        return { trackProgress, trackName, artistName, albumName, albumCoverURL, isPlaying };
+        return {
+            trackProgress,
+            trackName,
+            artistName,
+            albumName,
+            albumCoverURL,
+            isPlaying: player.isPlaying
+        };
     }
     else
-        return null;
+        return player;
 }
 function getMembers(clients) {
     return clients.map(socketId => {
@@ -240,9 +249,5 @@ function emitSessionUpdated(session) {
 }
 function emitPlayerUpdated(sockets, room, playerContext) {
     sockets.in(room).emit('PLAYER_UPDATED', playerContext);
-}
-function emitSessionError(session, errorMessage) {
-    const socket = session.socket;
-    socket.emit('PLAYER_ERROR', { errorMessage });
 }
 //# sourceMappingURL=io.js.map

@@ -1,7 +1,5 @@
 <template>
   <div v-if="player">
-    <Player v-bind:player="player"></Player>
-
     <div v-if="canConnect">
       <div v-if="profile.isConnected">
         <button class="button is-outlined" v-on:click="disconnectPlayer">Disconnect your player</button>
@@ -20,23 +18,14 @@
 </template>
 
 <script>
-  import Player from "./Player.vue"
-
   export default {
-    components: {
-      Player,
-    },
     sockets: {
-      SESSION_UPDATED: function({ profile }) {
-        this.profile = profile
-      },
       PLAYER_UPDATED: function({ player, session }) {
         this.player = player;
         this.session = session;
       },
-      PLAYER_ERROR: function({ errorMessage }) {
-        console.log(errorMessage);
-        this.disconnectPlayer();
+      SESSION_UPDATED: function({ profile }) {
+        this.profile = profile;
       }
     },
 
@@ -56,8 +45,7 @@
     },
     computed:{
       canConnect: function() {
-        const isTheirRoom = this.profile.username === this.session.username;
-        return !isTheirRoom && this.profile.canPlay;
+        return this.profile && this.profile.canPlay;
       }
     }
   }

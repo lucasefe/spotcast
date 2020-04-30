@@ -15,7 +15,7 @@
           <div class="tile">
             <div class="tile is-parent is-vertical">
               <article class="tile is-child">
-                <PlayerContext></PlayerContext>
+                <PlayerState></PlayerState>
               </article>
               <article class="tile is-child">
                 <PlayerMembers></PlayerMembers>
@@ -26,8 +26,6 @@
 
         <div class="tile is-parent is-4">
           <article class="tile is-child box">
-            <p class="title">Chat</p>
-            <Chat></Chat>
           </article>
         </div>
       </div>
@@ -37,36 +35,18 @@
 
 <script>
 
-import Chat from "../components/Chat.vue";
 import Profile from "../components/Profile.vue";
-import PlayerContext from "../components/PlayerContext.vue"
 import PlayerMembers from "../components/PlayerMembers.vue"
+import PlayerState from "../components/PlayerState.vue"
 
 export default {
   components: {
-    Chat,
-    PlayerContext,
     PlayerMembers,
+    PlayerState,
     Profile
-  },
-  sockets: {
-    SESSION_UPDATED: function({ profile }) {
-      this.username = profile.username;
-      this.name = profile.name;
-      this.room = profile.room;
-
-      const routeRoom = this.$route.params.room;
-      // join specific room
-      if (routeRoom && routeRoom !== this.room) {
-        this.$socket.emit('JOIN', { room: routeRoom})
-      }
-    }
   },
 
   data: () => ({
-    username: '',
-    name: '',
-    room: ''
   })
 };
 </script>

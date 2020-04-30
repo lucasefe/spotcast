@@ -1,6 +1,7 @@
 import 'buefy/dist/buefy.css'
 import App from './App.vue'
-import Home from './pages/Home.vue'
+import PlayingPage from './pages/Playing.vue'
+import ListeningPage from './pages/Listening.vue'
 import NotFoundPage from './pages/NotFound.vue'
 import Buefy from 'buefy'
 import Vue from 'vue'
@@ -16,11 +17,11 @@ Vue.config.productionTip = false;
 const routes = [
   {
     path: '/',
-    component: Home
+    component: PlayingPage
   },
   {
     path: '/:room',
-    component: Home
+    component: ListeningPage
   },
   {
     path: '/notFound',
