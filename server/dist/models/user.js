@@ -37,7 +37,7 @@ const UserSchema = new mongoose_1.Schema({
         context: { type: Object },
         progressMS: { type: Number },
         item: { type: Object },
-        currentlyPlayingType: { type: String, enum: ['track', 'album', 'artist'] },
+        currentlyPlayingType: { type: String, enum: ['track', 'episode', 'ad', 'unknown'] },
         isPlaying: { type: Boolean }
     },
     profile: { type: Object }
