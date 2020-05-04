@@ -17,7 +17,6 @@
       <ul>
         <li>You need to have Spotify app open.</li>
         <li>If you are using the web version, you need to be playing something</li>
-        <li>Also, and very important, make sure your session is not private. We can't read your player is that's the case, and if we can't read it, we can't synchronize it with the fogón.</li>
       </ul>
     </div>
   </div>
