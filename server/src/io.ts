@@ -4,7 +4,7 @@ import { v4 as uuid }             from 'uuid';
 import Bluebird                   from 'bluebird';
 import Debug                      from 'debug';
 import http                       from 'http';
-import initSessions               from './ioSession';
+import initSessions               from './io_sessions';
 import logger                     from './util/logger';
 import ms                         from 'ms';
 import rollbar                    from '../lib/rollbar';

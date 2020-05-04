@@ -39,7 +39,8 @@ const UserSchema = new mongoose_1.Schema({
         item: { type: Object },
         currentlyPlayingType: { type: String, enum: ['track', 'album', 'artist'] },
         isPlaying: { type: Boolean }
-    }
+    },
+    profile: { type: Object }
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 const User = mongoose_1.default.model('User', UserSchema);
 exports.default = User;

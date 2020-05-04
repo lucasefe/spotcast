@@ -59,13 +59,12 @@ export default function configureServer(): http.Server {
   app.use(auth.routes);
 
   app.get('/:username', auth.secured, function(req, res) {
-    console.log(`username is ${req.params.username}`);
     res.render('index.html');
   });
 
   const httpServer = http.createServer(app);
 
-  require('./io').initialize(httpServer);
+  require('./io').initialize(httpServer); /* eslint-disable-line global-require */
 
   return httpServer;
 }

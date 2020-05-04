@@ -24,7 +24,7 @@ const user_1 = require("./models/user");
 const uuid_1 = require("uuid");
 const bluebird_1 = __importDefault(require("bluebird"));
 const debug_1 = __importDefault(require("debug"));
-const ioSession_1 = __importDefault(require("./ioSession"));
+const io_sessions_1 = __importDefault(require("./io_sessions"));
 const logger_1 = __importDefault(require("./util/logger"));
 const ms_1 = __importDefault(require("ms"));
 const rollbar_1 = __importDefault(require("../lib/rollbar"));
@@ -35,7 +35,7 @@ const sessions = new session_store_1.default();
 exports.initialize = function (httpServer) {
     logger_1.default.info('initializing socket server');
     const sockets = socket_io_1.default(httpServer);
-    ioSession_1.default(sockets);
+    io_sessions_1.default(sockets);
     if (sockets) {
         sockets.on('connection', (socket) => {
             logger_1.default.debug(`Socket id created: ${socket.id}`);

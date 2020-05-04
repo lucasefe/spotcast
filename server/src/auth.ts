@@ -5,7 +5,7 @@ import PassportSpotify                 from 'passport-spotify';
 import User, { UserModel }             from './models/user';
 
 export const clientID = '83ccfd2305cc4bc4956138041b97e3a9';
-export const  clientSecret = '76c34e6e20f4410685724966258e03ee';
+export const clientSecret = '76c34e6e20f4410685724966258e03ee';
 
 const callbackURL = process.env.NODE_ENV === 'production' ?
   'http://fogon.lucasefe.me/login/callback' :
@@ -24,7 +24,7 @@ const spotifyStrategy = new SpotifyStrategy({ clientID, clientSecret, callbackUR
       .then(user => {
         const verb = user.isNew ? 'created' : 'updated';
         debug(`User ${verb} Spotify profile: ${JSON.stringify(profile)}`);
-        user.set({ name, photoURL, accessToken, refreshToken, expiresIn });
+        user.set({ name, photoURL, accessToken, refreshToken, expiresIn, profile });
         return user.save();
       }).then(() => {
         done(null, { id: profile.id });
@@ -36,7 +36,8 @@ const spotifyStrategy = new SpotifyStrategy({ clientID, clientSecret, callbackUR
 const spotifyScopes = [
   'user-modify-playback-state',
   'user-read-playback-state',
-  'user-read-currently-playing'
+  'user-read-currently-playing',
+  'user-read-private'
 ];
 
 passport.use(spotifyStrategy);

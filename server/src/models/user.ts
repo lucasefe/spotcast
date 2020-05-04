@@ -40,7 +40,8 @@ const UserSchema = new Schema({
     item:                 { type: Object },
     currentlyPlayingType: { type: String, enum: [ 'track', 'album', 'artist' ] },
     isPlaying:            { type: Boolean }
-  }
+  },
+  profile: { type: Object }
 
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 

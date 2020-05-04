@@ -31,7 +31,7 @@ const spotifyStrategy = new SpotifyStrategy({ clientID: exports.clientID, client
         .then(user => {
         const verb = user.isNew ? 'created' : 'updated';
         debug(`User ${verb} Spotify profile: ${JSON.stringify(profile)}`);
-        user.set({ name, photoURL, accessToken, refreshToken, expiresIn });
+        user.set({ name, photoURL, accessToken, refreshToken, expiresIn, profile });
         return user.save();
     }).then(() => {
         done(null, { id: profile.id });
@@ -40,7 +40,8 @@ const spotifyStrategy = new SpotifyStrategy({ clientID: exports.clientID, client
 const spotifyScopes = [
     'user-modify-playback-state',
     'user-read-playback-state',
-    'user-read-currently-playing'
+    'user-read-currently-playing',
+    'user-read-private'
 ];
 passport_1.default.use(spotifyStrategy);
 passport_1.default.serializeUser((user, done) => {
