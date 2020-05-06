@@ -42,6 +42,8 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           logger.debug(`User ${username} disconnected`);
           sessions.removeSession(socket);
 
+          disconnectPlayer(session);
+
           if (session.room)
             leaveRoom(session);
         }
@@ -69,9 +71,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
       socket.on('CONNECT_PLAYER', function() {
         const session = sessions.getSession(socket);
         if (session) {
-          session.isConnected = true;
-          logger.debug(`User ${session.username} connected player to ${session.room}. `);
-          emitSessionUpdated(session);
+          connectPlayer(session);
           emitRoomMembersUpdated(sockets, session.room);
         }
       });
@@ -79,9 +79,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
       socket.on('DISCONNECT_PLAYER', function() {
         const session = sessions.getSession(socket);
         if (session) {
-          session.isConnected = false;
-          logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
-          emitSessionUpdated(session);
+          disconnectPlayer(session);
           emitRoomMembersUpdated(sockets, session.room);
         }
       });
@@ -99,9 +97,12 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           socket.leave(session.room);
         }
 
-        logger.debug(`User ${username} joined room ${room}`);
+        // if user was connected, let's reset it.
+        session.isConnected = false;
+
         session.room = room;
         socket.join(room);
+        logger.debug(`User ${username} joined room ${room}`);
 
         emitSessionUpdated(session);
         emitRoomMembersUpdated(sockets, room);
@@ -322,4 +323,23 @@ function emitPlayerUpdated(sockets, room, playerContext): void {
 
 function emitNewMessage(sockets, room, message): void {
   sockets.in(room).emit('NEW_MESSAGE', { message });
+}
+
+function connectPlayer(session): void {
+  if (session.isConnected)
+    logger.warn(`User ${session.username} already connected player to ${session.room}. `);
+  else {
+    session.isConnected = true;
+    logger.debug(`User ${session.username} connected player to ${session.room}. `);
+    emitSessionUpdated(session);
+  }
+}
+
+function disconnectPlayer(session): void {
+  if (session.isConnected) {
+    session.isConnected = false;
+    logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
+    emitSessionUpdated(session);
+  } else
+    logger.warn(`User ${session.username} already disconnected player to ${session.room}. `);
 }

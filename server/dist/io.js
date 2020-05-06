@@ -52,6 +52,7 @@ exports.initialize = function (httpServer) {
                     const { username } = session;
                     logger_1.default.debug(`User ${username} disconnected`);
                     sessions.removeSession(socket);
+                    disconnectPlayer(session);
                     if (session.room)
                         leaveRoom(session);
                 }
@@ -75,18 +76,14 @@ exports.initialize = function (httpServer) {
             socket.on('CONNECT_PLAYER', function () {
                 const session = sessions.getSession(socket);
                 if (session) {
-                    session.isConnected = true;
-                    logger_1.default.debug(`User ${session.username} connected player to ${session.room}. `);
-                    emitSessionUpdated(session);
+                    connectPlayer(session);
                     emitRoomMembersUpdated(sockets, session.room);
                 }
             });
             socket.on('DISCONNECT_PLAYER', function () {
                 const session = sessions.getSession(socket);
                 if (session) {
-                    session.isConnected = false;
-                    logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
-                    emitSessionUpdated(session);
+                    disconnectPlayer(session);
                     emitRoomMembersUpdated(sockets, session.room);
                 }
             });
@@ -101,9 +98,11 @@ exports.initialize = function (httpServer) {
                     logger_1.default.debug(`User ${username} left room ${session.room}`);
                     socket.leave(session.room);
                 }
-                logger_1.default.debug(`User ${username} joined room ${room}`);
+                // if user was connected, let's reset it.
+                session.isConnected = false;
                 session.room = room;
                 socket.join(room);
+                logger_1.default.debug(`User ${username} joined room ${room}`);
                 emitSessionUpdated(session);
                 emitRoomMembersUpdated(sockets, room);
             }
@@ -264,5 +263,23 @@ function emitPlayerUpdated(sockets, room, playerContext) {
 }
 function emitNewMessage(sockets, room, message) {
     sockets.in(room).emit('NEW_MESSAGE', { message });
+}
+function connectPlayer(session) {
+    if (session.isConnected)
+        logger_1.default.warn(`User ${session.username} already connected player to ${session.room}. `);
+    else {
+        session.isConnected = true;
+        logger_1.default.debug(`User ${session.username} connected player to ${session.room}. `);
+        emitSessionUpdated(session);
+    }
+}
+function disconnectPlayer(session) {
+    if (session.isConnected) {
+        session.isConnected = false;
+        logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
+        emitSessionUpdated(session);
+    }
+    else
+        logger_1.default.warn(`User ${session.username} already disconnected player to ${session.room}. `);
 }
 //# sourceMappingURL=io.js.map
