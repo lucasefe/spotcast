@@ -1,8 +1,8 @@
-import * as auth                                      from './auth';
-import { UserModel }                                  from './models/user';
-import axios, { AxiosInstance, AxiosRequestConfig }   from 'axios';
-import Debug                                          from 'debug';
-import qs                                             from 'qs';
+import * as auth                                                     from './auth';
+import { UserModel }                                                 from './models/user';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse }   from 'axios';
+import Debug                                                         from 'debug';
+import qs                                                            from 'qs';
 import('axios-debug-log');
 
 const debug = Debug('spotify');
@@ -110,7 +110,7 @@ export async function getAccessToken(user): Promise<RefreshAccessTokenResponse> 
   };
 }
 
-export async function getCurrentPlayer(user: UserModel): Promise<CurrentPlayerResponse> {
+export async function getCurrentPlayer(user: UserModel): Promise<AxiosResponse> {
   const { accessToken } = user;
 
   const options: AxiosRequestConfig = {
@@ -123,18 +123,7 @@ export async function getCurrentPlayer(user: UserModel): Promise<CurrentPlayerRe
 
   const instance = getSpotifyAPIClient(user);
   const response = await instance.get('/me/player', options);
-
-  return {
-    device:               response.data.device,
-    shuffleState:         response.data.shuffle_state,
-    repeatState:          response.data.repeat_state,
-    timestamp:            response.data.timestamp,
-    context:              response.data.context,
-    progressMS:           response.data.progress_ms,
-    item:                 response.data.item,
-    currentlyPlayingType: response.data.currently_playing_type,
-    isPlaying:            response.data.is_playing
-  };
+  return response;
 }
 
 

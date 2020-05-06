@@ -22,6 +22,8 @@ const UserSchema = new mongoose_1.Schema({
     name: { type: String },
     username: { type: String, required: true },
     photoURL: { type: String },
+    provider: { type: String },
+    product: { type: String },
     accessToken: { type: String, required: true },
     refreshToken: { type: String, required: true },
     expiresIn: { type: Number, required: true },
@@ -66,23 +68,28 @@ function findUser(username) {
 exports.findUser = findUser;
 function getCurrentPlayer(user) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const currentPlayer = yield spotify.getCurrentPlayer(user);
-            return currentPlayer;
-        }
-        catch (error) {
-            const isUnauthorized = error.response && error.response.status === 401;
-            if (isUnauthorized) {
-                const { accessToken } = yield spotify.getAccessToken(user);
-                const currentPlayer = yield spotify.getCurrentPlayer(user);
-                user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
-                yield user.save();
-                return currentPlayer;
-            }
-            else
-                throw error;
-        }
+        const response = yield spotify.getCurrentPlayer(user);
+        const currentPlayer = parseCurrentPlayer(response.data);
+        user.set({ currentPlayer });
+        yield user.save();
+        return currentPlayer;
     });
 }
-exports.getCurrentPlayer = getCurrentPlayer;
+function parseCurrentPlayer(data) {
+    if (data) {
+        return {
+            device: data.device,
+            shuffleState: data.shuffle_state,
+            repeatState: data.repeat_state,
+            timestamp: data.timestamp,
+            context: data.context,
+            progressMS: data.progress_ms,
+            item: data.item,
+            currentlyPlayingType: data.currently_playing_type,
+            isPlaying: data.is_playing
+        };
+    }
+    else
+        return null;
+}
 //# sourceMappingURL=user.js.map

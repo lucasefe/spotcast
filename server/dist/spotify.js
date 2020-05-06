@@ -63,17 +63,7 @@ function getCurrentPlayer(user) {
         };
         const instance = getSpotifyAPIClient(user);
         const response = yield instance.get('/me/player', options);
-        return {
-            device: response.data.device,
-            shuffleState: response.data.shuffle_state,
-            repeatState: response.data.repeat_state,
-            timestamp: response.data.timestamp,
-            context: response.data.context,
-            progressMS: response.data.progress_ms,
-            item: response.data.item,
-            currentlyPlayingType: response.data.currently_playing_type,
-            isPlaying: response.data.is_playing
-        };
+        return response;
     });
 }
 exports.getCurrentPlayer = getCurrentPlayer;

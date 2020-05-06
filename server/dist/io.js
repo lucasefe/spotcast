@@ -168,10 +168,10 @@ function isListening(session) {
 }
 function updateSession(session) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { username } = session;
+        const { username, product } = session;
         const user = yield user_1.updateUser(username);
         const canPlay = !!(user && user.currentPlayer && user.currentPlayer.device);
-        debug({ username, canPlay });
+        debug({ username, canPlay, product });
         const statusChanged = session.canPlay !== canPlay;
         session.canPlay = canPlay;
         session.currentPlayer = user.currentPlayer;
@@ -208,7 +208,7 @@ function sessionToJSON(session) {
     return { username, name, isConnected, canPlay };
 }
 function sessionToProfileJSON(session) {
-    const json = Object.assign(Object.assign({}, sessionToJSON(session)), { room: session.room });
+    const json = Object.assign(Object.assign({}, sessionToJSON(session)), { room: session.room, product: session.product });
     return json;
 }
 function getPlayerState(session) {

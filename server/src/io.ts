@@ -175,10 +175,10 @@ function isListening(session): boolean {
 }
 
 async function updateSession(session): Promise<void> {
-  const { username } = session;
-  const user         = await updateUser(username);
-  const canPlay      = !!(user && user.currentPlayer && user.currentPlayer.device);
-  debug({ username, canPlay });
+  const { username, product } = session;
+  const user                  = await updateUser(username);
+  const canPlay               = !!(user && user.currentPlayer && user.currentPlayer.device);
+  debug({ username, canPlay, product });
   const statusChanged   = session.canPlay !== canPlay;
   session.canPlay       = canPlay;
   session.currentPlayer = user.currentPlayer;
@@ -218,6 +218,7 @@ interface SessionResponse {
 
 interface ProfileResponse extends SessionResponse {
   room: string;
+  product: string;
 }
 
 
@@ -234,7 +235,8 @@ function sessionToJSON(session: Session): SessionResponse {
 function sessionToProfileJSON(session): ProfileResponse {
   const json = {
     ...sessionToJSON(session),
-    room:        session.room
+    room:    session.room,
+    product: session.product
   };
 
   return json;

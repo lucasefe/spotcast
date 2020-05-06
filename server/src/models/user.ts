@@ -7,6 +7,8 @@ export interface UserModel extends Document {
   name?: string;
   username: string;
   photoURL?: string;
+  provider: string;
+  product: string;
 
   accessToken: string;
   refreshToken: string;
@@ -21,6 +23,8 @@ const UserSchema = new Schema({
   name:         { type: String },
   username:     { type: String, required: true },
   photoURL:     { type: String },
+  provider:     { type: String },
+  product:     { type: String },
 
   accessToken:            { type: String, required: true },
   refreshToken:           { type: String, required: true },
@@ -67,20 +71,28 @@ export async function findUser(username): Promise<UserModel> {
 }
 
 
-export async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
-  try {
-    const currentPlayer = await spotify.getCurrentPlayer(user);
-    return currentPlayer;
-  } catch (error) {
-    const isUnauthorized = error.response && error.response.status === 401;
-    if (isUnauthorized) {
-      const { accessToken } = await spotify.getAccessToken(user);
-      const currentPlayer   = await spotify.getCurrentPlayer(user);
-      user.set({ currentPlayer, accessToken, accessTokenRefreshedAt: Date.now() });
-      await user.save();
-      return currentPlayer;
-    } else
-      throw error;
-  }
+async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
+  const response      = await spotify.getCurrentPlayer(user);
+  const currentPlayer = parseCurrentPlayer(response.data);
+  user.set({ currentPlayer });
+  await user.save();
+  return currentPlayer;
+}
 
+
+function parseCurrentPlayer(data): spotify.CurrentPlayerResponse | null {
+  if (data) {
+    return {
+      device:               data.device,
+      shuffleState:         data.shuffle_state,
+      repeatState:          data.repeat_state,
+      timestamp:            data.timestamp,
+      context:              data.context,
+      progressMS:           data.progress_ms,
+      item:                 data.item,
+      currentlyPlayingType: data.currently_playing_type,
+      isPlaying:            data.is_playing
+    };
+  } else
+    return null;
 }

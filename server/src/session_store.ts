@@ -7,6 +7,7 @@ export interface Session {
   username: string;
   name: string;
   room?: string;
+  product: string;
   currentPlayer?: spotify.CurrentPlayer;
 
   isConnected: boolean;
@@ -35,6 +36,7 @@ export default class SessionStore {
       session.isConnected = false;
       session.canPlay     = false;
       session.room        = undefined;
+      session.product     = user.product;
       return session;
     } else {
       const newSession = this.createSession(socket, user);
@@ -49,7 +51,8 @@ export default class SessionStore {
       username:    user.username,
       name:        user.name,
       isConnected: false,
-      canPlay:     false
+      canPlay:     false,
+      product:     user.product
     };
   }
 

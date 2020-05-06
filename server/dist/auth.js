@@ -27,11 +27,12 @@ const SpotifyStrategy = passport_spotify_1.default.Strategy;
 const spotifyStrategy = new SpotifyStrategy({ clientID: exports.clientID, clientSecret: exports.clientSecret, callbackURL }, function onSuccessAuth(accessToken, refreshToken, expiresIn, profile, done) {
     const photoURL = profile.photos && profile.photos[0];
     const name = profile.displayName;
+    const { product, provider } = profile;
     findOrInitializeUser(profile.id)
         .then(user => {
         const verb = user.isNew ? 'created' : 'updated';
         debug(`User ${verb} Spotify profile: ${JSON.stringify(profile)}`);
-        user.set({ name, photoURL, accessToken, refreshToken, expiresIn, profile });
+        user.set({ name, photoURL, accessToken, refreshToken, expiresIn, profile, product, provider });
         return user.save();
     }).then(() => {
         done(null, { id: profile.id });
