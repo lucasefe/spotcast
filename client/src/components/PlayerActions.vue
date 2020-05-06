@@ -16,7 +16,9 @@
       </p>
       <ul>
         <li>You need to have Spotify app open.</li>
-        <li>If you are using the web version, you need to be playing something</li>
+        <li>If you are using the web version, it needs to be open and playing something
+          <a href="https://open.spotify.com/" target="_blank">Open Spotify Web</a>
+        </li>
       </ul>
     </div>
   </div>
