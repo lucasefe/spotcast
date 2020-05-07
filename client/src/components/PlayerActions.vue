@@ -1,7 +1,13 @@
 <template>
-  <div v-if="player">
-    <div>
-      {{ this.error}}
+  <section v-if="player">
+    <div v-if="error">
+      <div v-if="error.name === 'PlayerNotResponding'" class="notification is-warning">
+        Your player is not responding. Make sure your Spotify is running. Also, if you are using the web version, try playing something.
+      </div>
+      <div v-else class="notification is-warning">
+        {{ this.error.message}}
+      </div>
+      <br/>
     </div>
     <div v-if="canConnect">
       <div v-if="profile.isConnectedToRoom">
@@ -24,7 +30,7 @@
         </li>
       </ul>
     </div>
-  </div>
+  </section>
   <div v-else>
     No player found. Looks like {{ session.name }} is not playing any music at the moment :-(
   </div>
@@ -41,7 +47,7 @@
         this.profile = profile;
       },
       SESSION_ERROR: function({ error }) {
-        this.error = error.message
+        this.error = error
       }
     },
 

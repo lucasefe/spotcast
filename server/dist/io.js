@@ -285,13 +285,17 @@ function emitNewMessage(sockets, room, message) {
     sockets.in(room).emit('NEW_MESSAGE', { message });
 }
 function connectPlayer(session) {
-    if (session.isConnectedToRoom)
+    if (session.isConnectedToRoom) {
         logger_1.default.warn(`User ${session.username} already connected player to ${session.room}. `);
-    else {
+        return;
+    }
+    if (session.canPlay) {
         session.isConnectedToRoom = true;
         logger_1.default.debug(`User ${session.username} connected player to ${session.room}. `);
         emitSessionUpdated(session);
     }
+    else
+        emitSessionError(session, { name: 'CannotPlay', message: 'You cannot connect because your player is off, or it is not playing anything.' });
 }
 function disconnectPlayer(session) {
     if (session.isConnectedToRoom) {

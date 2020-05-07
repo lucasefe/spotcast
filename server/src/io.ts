@@ -213,7 +213,6 @@ async function synchronizeListeners(sockets, sessionsListening, player): Promise
       debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
 
       try {
-
         if (shouldPlay)
           await spotify.play(user, player.item.uri, player.progressMS);
         else if (shouldPause)
@@ -356,13 +355,18 @@ function emitNewMessage(sockets, room, message): void {
 }
 
 function connectPlayer(session): void {
-  if (session.isConnectedToRoom)
+  if (session.isConnectedToRoom) {
     logger.warn(`User ${session.username} already connected player to ${session.room}. `);
-  else {
+    return;
+  }
+
+  if (session.canPlay) {
     session.isConnectedToRoom = true;
     logger.debug(`User ${session.username} connected player to ${session.room}. `);
     emitSessionUpdated(session);
-  }
+  } else
+    emitSessionError(session, { name: 'CannotPlay', message: 'You cannot connect because your player is off, or it is not playing anything.' });
+
 }
 
 function disconnectPlayer(session): void {
