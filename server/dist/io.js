@@ -51,10 +51,16 @@ exports.initialize = function (httpServer) {
                 if (session) {
                     const { username } = session;
                     logger_1.default.debug(`User ${username} disconnected`);
-                    sessions.removeSession(socket);
-                    disconnectPlayer(session);
+                    if (session.isConnectedToRoom)
+                        disconnectPlayer(session);
+                    else {
+                        const wasPlaying = session.currentPlayer && session.currentPlayer.isPlaying;
+                        if (wasPlaying)
+                            disconnectListeners(sockets, session.room);
+                    }
                     if (session.room)
                         leaveRoom(session);
+                    sessions.removeSession(socket);
                 }
             });
             socket.on('JOIN', function ({ room }) {
@@ -134,12 +140,6 @@ function handlerError(sockets, error) {
     logger_1.default.error(error);
     rollbar_1.default.error(error);
 }
-function isPlaying(session) {
-    return session.username === session.room;
-}
-function isListening(session) {
-    return session.username !== session.room;
-}
 function updatePlayers(sockets) {
     return __awaiter(this, void 0, void 0, function* () {
         const allSessions = sessions
@@ -148,7 +148,7 @@ function updatePlayers(sockets) {
         yield bluebird_1.default.map(allSessions, refreshSession, { concurrency: 10 });
         const sessionsPlaying = sessions
             .getSessions()
-            .filter(isPlaying);
+            .filter(session => session.username === session.room);
         logger_1.default.debug(`Sessions playing: ${sessionsPlaying.length}`);
         yield bluebird_1.default.map(sessionsPlaying, function (session) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -177,10 +177,7 @@ function updatePlayersAndListeners(sockets, session) {
         const { room } = session;
         const player = getPlayerState(session);
         emitPlayerUpdated(sockets, room, player);
-        const sessionsListening = sessions
-            .getSessions()
-            .filter(isListening)
-            .filter(s => s.room === session.room);
+        const sessionsListening = getListeningSessions(room);
         logger_1.default.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
         yield synchronizeListeners(sockets, sessionsListening, session.currentPlayer);
     });
@@ -298,12 +295,24 @@ function connectPlayer(session) {
         emitSessionError(session, { name: 'CannotPlay', message: 'You cannot connect because your player is off, or it is not playing anything.' });
 }
 function disconnectPlayer(session) {
-    if (session.isConnectedToRoom) {
-        session.isConnectedToRoom = false;
-        logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
-        emitSessionUpdated(session);
-    }
-    else
-        logger_1.default.warn(`User ${session.username} already disconnected player to ${session.room}. `);
+    session.isConnectedToRoom = false;
+    logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
+    emitSessionUpdated(session);
+}
+function disconnectListeners(sockets, room) {
+    const sessionStoppedError = {
+        name: 'SessionStopped',
+        message: `Session ${room} stopped. `
+    };
+    getListeningSessions(room)
+        .map(session => {
+        disconnectPlayer(session);
+        emitSessionError(session, sessionStoppedError);
+    });
+}
+function getListeningSessions(room) {
+    return sessions.getSessions()
+        .filter(session => session.username !== session.room)
+        .filter(s => s.room === room);
 }
 //# sourceMappingURL=io.js.map

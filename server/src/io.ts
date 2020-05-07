@@ -41,12 +41,19 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         if (session) {
           const { username } = session;
           logger.debug(`User ${username} disconnected`);
-          sessions.removeSession(socket);
 
-          disconnectPlayer(session);
+          if (session.isConnectedToRoom)
+            disconnectPlayer(session);
+          else {
+            const wasPlaying = session.currentPlayer && session.currentPlayer.isPlaying;
+            if (wasPlaying)
+              disconnectListeners(sockets, session.room);
+          }
 
           if (session.room)
             leaveRoom(session);
+
+          sessions.removeSession(socket);
         }
       });
 
@@ -143,14 +150,6 @@ function handlerError(sockets, error): void {
 }
 
 
-function isPlaying(session): boolean {
-  return session.username === session.room;
-}
-
-function isListening(session): boolean {
-  return session.username !== session.room;
-}
-
 async function updatePlayers(sockets): Promise<void> {
   const allSessions = sessions
     .getSessions();
@@ -160,13 +159,14 @@ async function updatePlayers(sockets): Promise<void> {
 
   const sessionsPlaying = sessions
     .getSessions()
-    .filter(isPlaying);
+    .filter(session => session.username === session.room);
 
   logger.debug(`Sessions playing: ${sessionsPlaying.length}`);
   await Bluebird.map(sessionsPlaying, async function(session) {
     await updatePlayersAndListeners(sockets, session);
   }, { concurrency: 10 });
 }
+
 
 async function refreshSession(session): Promise<void> {
   const { username, product } = session;
@@ -190,10 +190,7 @@ async function updatePlayersAndListeners(sockets, session): Promise<void> {
   const player       = getPlayerState(session);
   emitPlayerUpdated(sockets, room, player);
 
-  const sessionsListening = sessions
-    .getSessions()
-    .filter(isListening)
-    .filter(s => s.room === session.room);
+  const sessionsListening = getListeningSessions(room);
 
   logger.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
   await synchronizeListeners(sockets, sessionsListening, session.currentPlayer);
@@ -370,10 +367,27 @@ function connectPlayer(session): void {
 }
 
 function disconnectPlayer(session): void {
-  if (session.isConnectedToRoom) {
-    session.isConnectedToRoom = false;
-    logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
-    emitSessionUpdated(session);
-  } else
-    logger.warn(`User ${session.username} already disconnected player to ${session.room}. `);
+  session.isConnectedToRoom = false;
+  logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
+  emitSessionUpdated(session);
+}
+
+function disconnectListeners(sockets, room): void {
+  const sessionStoppedError = {
+    name:    'SessionStopped',
+    message: `Session ${room} stopped. `
+  };
+
+  getListeningSessions(room)
+    .map(session => {
+      disconnectPlayer(session);
+      emitSessionError(session, sessionStoppedError);
+    });
+}
+
+
+function getListeningSessions(room): Array<Session> {
+  return sessions.getSessions()
+    .filter(session => session.username !== session.room)
+    .filter(s => s.room === room);
 }
