@@ -25,6 +25,9 @@ const debug_1 = __importDefault(require("debug"));
 const qs_1 = __importDefault(require("qs"));
 Promise.resolve().then(() => __importStar(require('axios-debug-log')));
 const debug = debug_1.default('spotify');
+class PlayerNotRespondingError extends Error {
+}
+exports.PlayerNotRespondingError = PlayerNotRespondingError;
 function getAccessToken(user) {
     return __awaiter(this, void 0, void 0, function* () {
         debug(`Getting access token for user ${user.username}`);
@@ -71,10 +74,18 @@ function play(user, itemURI, progressMS) {
     return __awaiter(this, void 0, void 0, function* () {
         debug(`Playing  ${user.username}:${itemURI}:${progressMS}`);
         const instance = getSpotifyAPIClient(user);
-        yield instance.put('/me/player/play', {
-            uris: [itemURI],
-            position_ms: progressMS
-        });
+        try {
+            yield instance.put('/me/player/play', {
+                uris: [itemURI],
+                position_ms: progressMS
+            });
+        }
+        catch (error) {
+            if (error.response && error.response.status === 404)
+                throw new PlayerNotRespondingError();
+            else
+                throw error;
+        }
     });
 }
 exports.play = play;
@@ -82,7 +93,15 @@ function pause(user) {
     return __awaiter(this, void 0, void 0, function* () {
         debug(`Pausing  ${user.username}`);
         const instance = getSpotifyAPIClient(user);
-        yield instance.put('/me/player/pause');
+        try {
+            yield instance.put('/me/player/pause');
+        }
+        catch (error) {
+            if (error.response && error.response.status === 404)
+                throw new PlayerNotRespondingError();
+            else
+                throw error;
+        }
     });
 }
 exports.pause = pause;

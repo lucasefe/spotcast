@@ -49,10 +49,24 @@ exports.default = User;
 function updateUser(username) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield findUser(username);
-        const currentPlayer = yield getCurrentPlayer(user);
-        user.set({ currentPlayer });
-        yield user.save();
-        return user;
+        try {
+            const response = yield spotify.getCurrentPlayer(user);
+            const currentPlayer = parseCurrentPlayer(response.data);
+            console.log({ currentPlayer });
+            user.set({ currentPlayer });
+            yield user.save();
+            return user;
+        }
+        catch (error) {
+            const playerCannotBeFound = error.response && (error.response.status === 404 || error.response.status === 204);
+            if (playerCannotBeFound) {
+                user.set({ currentPlayer: null });
+                yield user.save();
+                return user;
+            }
+            else
+                throw error;
+        }
     });
 }
 exports.updateUser = updateUser;
@@ -66,15 +80,6 @@ function findUser(username) {
     });
 }
 exports.findUser = findUser;
-function getCurrentPlayer(user) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const response = yield spotify.getCurrentPlayer(user);
-        const currentPlayer = parseCurrentPlayer(response.data);
-        user.set({ currentPlayer });
-        yield user.save();
-        return currentPlayer;
-    });
-}
 function parseCurrentPlayer(data) {
     if (data) {
         return {

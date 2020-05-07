@@ -1,7 +1,10 @@
 <template>
   <div v-if="player">
+    <div>
+      {{ this.error}}
+    </div>
     <div v-if="canConnect">
-      <div v-if="profile.isConnected">
+      <div v-if="profile.isConnectedToRoom">
         <button class="button is-outlined" v-on:click="disconnectPlayer">Disconnect your player</button>
       </div>
       <div v-else>
@@ -36,17 +39,22 @@
       },
       SESSION_UPDATED: function({ profile }) {
         this.profile = profile;
+      },
+      SESSION_ERROR: function({ error }) {
+        this.error = error.message
       }
     },
 
     data: () => ({
       player: '',
       session: '',
-      profile: ''
+      profile: '',
+      error: ''
     }),
 
     methods: {
       connectPlayer: function() {
+        this.error = ''
         this.$socket.emit('CONNECT_PLAYER')
       },
       disconnectPlayer: function() {

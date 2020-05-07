@@ -14,7 +14,7 @@ class SessionStore {
         if (session) {
             session.username = user.username;
             session.name = user.name;
-            session.isConnected = false;
+            session.isConnectedToRoom = false;
             session.canPlay = false;
             session.room = undefined;
             session.product = user.product;
@@ -31,7 +31,7 @@ class SessionStore {
             socket,
             username: user.username,
             name: user.name,
-            isConnected: false,
+            isConnectedToRoom: false,
             canPlay: false,
             product: user.product
         };

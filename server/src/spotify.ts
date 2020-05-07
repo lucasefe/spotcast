@@ -7,6 +7,10 @@ import('axios-debug-log');
 
 const debug = Debug('spotify');
 
+export class PlayerNotRespondingError extends Error {
+
+}
+
 /* eslint-disable @typescript-eslint/camelcase  */
 
 export interface Album {
@@ -131,16 +135,30 @@ export async function play(user: UserModel, itemURI, progressMS): Promise<void> 
   debug(`Playing  ${user.username}:${itemURI}:${progressMS}`);
 
   const instance = getSpotifyAPIClient(user);
-  await instance.put('/me/player/play', {
-    uris:        [ itemURI ],
-    position_ms: progressMS
-  });
+  try {
+    await instance.put('/me/player/play', {
+      uris:        [ itemURI ],
+      position_ms: progressMS
+    });
+  } catch (error) {
+    if (error.response && error.response.status === 404)
+      throw new PlayerNotRespondingError();
+    else
+      throw error;
+  }
 }
 
 export async function pause(user: UserModel): Promise<void> {
   debug(`Pausing  ${user.username}`);
   const instance = getSpotifyAPIClient(user);
-  await instance.put('/me/player/pause');
+  try {
+    await instance.put('/me/player/pause');
+  } catch (error) {
+    if (error.response && error.response.status === 404)
+      throw new PlayerNotRespondingError();
+    else
+      throw error;
+  }
 }
 
 function getSpotifyAPIClient(user: UserModel): AxiosInstance {

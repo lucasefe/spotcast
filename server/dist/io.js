@@ -99,7 +99,7 @@ exports.initialize = function (httpServer) {
                     socket.leave(session.room);
                 }
                 // if user was connected, let's reset it.
-                session.isConnected = false;
+                session.isConnectedToRoom = false;
                 session.room = room;
                 socket.join(room);
                 logger_1.default.debug(`User ${username} joined room ${room}`);
@@ -134,38 +134,30 @@ function handlerError(sockets, error) {
     logger_1.default.error(error);
     rollbar_1.default.error(error);
 }
-function updatePlayers(sockets) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const sessionsPlaying = sessions
-            .getSessions()
-            .filter(isPlaying);
-        logger_1.default.debug(`Sessions playing: ${sessionsPlaying.length}`);
-        const sessionsListening = sessions
-            .getSessions()
-            .filter(isListening);
-        logger_1.default.debug(`Sessions listening ${sessionsListening.length}`);
-        const activeSessions = [...sessionsPlaying, ...sessionsListening];
-        yield bluebird_1.default.map(activeSessions, updateSession, { concurrency: 10 });
-        yield bluebird_1.default.map(sessionsPlaying, function (session) {
-            return __awaiter(this, void 0, void 0, function* () {
-                const { username } = session;
-                const { room } = session;
-                const user = yield user_1.findUser(username);
-                session.currentPlayer = user.currentPlayer;
-                const player = getPlayerState(session);
-                emitPlayerUpdated(sockets, room, player);
-                yield synchronizeListeners(sockets, sessionsListening, user.currentPlayer);
-            });
-        });
-    });
-}
 function isPlaying(session) {
     return session.username === session.room;
 }
 function isListening(session) {
     return session.username !== session.room;
 }
-function updateSession(session) {
+function updatePlayers(sockets) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const allSessions = sessions
+            .getSessions();
+        logger_1.default.debug(`Sessions: ${allSessions.length}`);
+        yield bluebird_1.default.map(allSessions, refreshSession, { concurrency: 10 });
+        const sessionsPlaying = sessions
+            .getSessions()
+            .filter(isPlaying);
+        logger_1.default.debug(`Sessions playing: ${sessionsPlaying.length}`);
+        yield bluebird_1.default.map(sessionsPlaying, function (session) {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield updatePlayersAndListeners(sockets, session);
+            });
+        }, { concurrency: 10 });
+    });
+}
+function refreshSession(session) {
     return __awaiter(this, void 0, void 0, function* () {
         const { username, product } = session;
         const user = yield user_1.updateUser(username);
@@ -174,8 +166,23 @@ function updateSession(session) {
         const statusChanged = session.canPlay !== canPlay;
         session.canPlay = canPlay;
         session.currentPlayer = user.currentPlayer;
+        session.isConnectedToRoom = canPlay && session.isConnectedToRoom;
         if (statusChanged)
             emitSessionUpdated(session);
+    });
+}
+function updatePlayersAndListeners(sockets, session) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { username } = session;
+        const { room } = session;
+        const player = getPlayerState(session);
+        emitPlayerUpdated(sockets, room, player);
+        const sessionsListening = sessions
+            .getSessions()
+            .filter(isListening)
+            .filter(s => s.room === session.room);
+        logger_1.default.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
+        yield synchronizeListeners(sockets, sessionsListening, session.currentPlayer);
     });
 }
 function synchronizeListeners(sockets, sessionsListening, player) {
@@ -184,27 +191,37 @@ function synchronizeListeners(sockets, sessionsListening, player) {
             return __awaiter(this, void 0, void 0, function* () {
                 const { username } = session;
                 const user = yield user_1.findUser(username);
-                if (session.canPlay && session.isConnected) {
+                if (session.isConnectedToRoom && session.canPlay) {
                     const isPlayingSameSong = session.currentPlayer.item.uri === player.item.uri;
                     const isTooApart = Math.abs(session.currentPlayer.progressMS - player.progressMS) > ms_1.default('4s');
                     const shouldPlay = player.isPlaying && (!isPlayingSameSong || isTooApart);
                     const shouldPause = !player.isPlaying && session.currentPlayer.isPlaying;
                     debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
-                    if (shouldPlay)
-                        yield spotify.play(user, player.item.uri, player.progressMS);
-                    else if (shouldPause)
-                        yield spotify.pause(user);
+                    try {
+                        if (shouldPlay)
+                            yield spotify.play(user, player.item.uri, player.progressMS);
+                        else if (shouldPause)
+                            yield spotify.pause(user);
+                    }
+                    catch (error) {
+                        if (error instanceof spotify.PlayerNotRespondingError) {
+                            user.set({ 'currentPlayer.lastErrorStatus': 404 });
+                            yield user.save();
+                            emitSessionError(session, { name: 'PlayerNotResponding', message: 'Your player is not responding. ' });
+                            disconnectPlayer(session);
+                        }
+                    }
                 }
             });
         });
     });
 }
 function sessionToJSON(session) {
-    const { isConnected } = session;
+    const { isConnectedToRoom } = session;
     const { canPlay } = session;
     const { username } = session;
     const { name } = session;
-    return { username, name, isConnected, canPlay };
+    return { username, name, isConnectedToRoom, canPlay };
 }
 function sessionToProfileJSON(session) {
     const json = Object.assign(Object.assign({}, sessionToJSON(session)), { room: session.room, product: session.product });
@@ -258,6 +275,9 @@ function emitRoomMembersUpdated(sockets, room) {
 function emitSessionUpdated(session) {
     session.socket.emit('SESSION_UPDATED', { profile: sessionToProfileJSON(session) });
 }
+function emitSessionError(session, error) {
+    session.socket.emit('SESSION_ERROR', { error });
+}
 function emitPlayerUpdated(sockets, room, playerContext) {
     sockets.in(room).emit('PLAYER_UPDATED', playerContext);
 }
@@ -265,17 +285,17 @@ function emitNewMessage(sockets, room, message) {
     sockets.in(room).emit('NEW_MESSAGE', { message });
 }
 function connectPlayer(session) {
-    if (session.isConnected)
+    if (session.isConnectedToRoom)
         logger_1.default.warn(`User ${session.username} already connected player to ${session.room}. `);
     else {
-        session.isConnected = true;
+        session.isConnectedToRoom = true;
         logger_1.default.debug(`User ${session.username} connected player to ${session.room}. `);
         emitSessionUpdated(session);
     }
 }
 function disconnectPlayer(session) {
-    if (session.isConnected) {
-        session.isConnected = false;
+    if (session.isConnectedToRoom) {
+        session.isConnectedToRoom = false;
         logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
         emitSessionUpdated(session);
     }

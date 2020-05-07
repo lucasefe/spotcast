@@ -54,11 +54,23 @@ const User = mongoose.model<UserModel>('User', UserSchema);
 export default User;
 
 export async function updateUser(username): Promise<UserModel> {
-  const user          = await findUser(username);
-  const currentPlayer = await getCurrentPlayer(user);
-  user.set({ currentPlayer });
-  await user.save();
-  return user;
+  const user = await findUser(username);
+  try {
+    const response      = await spotify.getCurrentPlayer(user);
+    const currentPlayer = parseCurrentPlayer(response.data);
+    console.log({ currentPlayer });
+    user.set({ currentPlayer });
+    await user.save();
+    return user;
+  } catch (error) {
+    const playerCannotBeFound = error.response && (error.response.status === 404 || error.response.status === 204);
+    if (playerCannotBeFound) {
+      user.set({ currentPlayer: null });
+      await user.save();
+      return user;
+    } else
+      throw error;
+  }
 }
 
 
@@ -68,15 +80,6 @@ export async function findUser(username): Promise<UserModel> {
     return user;
   else
     throw new Error(`User not found: ${username}`);
-}
-
-
-async function getCurrentPlayer(user): Promise<spotify.CurrentPlayerResponse| null> {
-  const response      = await spotify.getCurrentPlayer(user);
-  const currentPlayer = parseCurrentPlayer(response.data);
-  user.set({ currentPlayer });
-  await user.save();
-  return currentPlayer;
 }
 
 
