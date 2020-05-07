@@ -52,7 +52,6 @@ function updateUser(username) {
         try {
             const response = yield spotify.getCurrentPlayer(user);
             const currentPlayer = parseCurrentPlayer(response.data);
-            console.log({ currentPlayer });
             user.set({ currentPlayer });
             yield user.save();
             return user;

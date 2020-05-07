@@ -58,7 +58,6 @@ export async function updateUser(username): Promise<UserModel> {
   try {
     const response      = await spotify.getCurrentPlayer(user);
     const currentPlayer = parseCurrentPlayer(response.data);
-    console.log({ currentPlayer });
     user.set({ currentPlayer });
     await user.save();
     return user;
