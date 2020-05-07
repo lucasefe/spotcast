@@ -10,7 +10,7 @@ export interface Session {
   product: string;
   currentPlayer?: spotify.CurrentPlayer;
 
-  isConnectedToRoom: boolean;
+  isListening: boolean;
   canPlay: boolean;
 }
 
@@ -31,12 +31,12 @@ export default class SessionStore {
   createOrUpdateSession(socket: sio.Socket, user: any): Session {
     const session = this.getSession(socket);
     if (session) {
-      session.username          = user.username;
-      session.name              = user.name;
-      session.isConnectedToRoom = false;
-      session.canPlay           = false;
-      session.room              = undefined;
-      session.product           = user.product;
+      session.username    = user.username;
+      session.name        = user.name;
+      session.isListening = false;
+      session.canPlay     = false;
+      session.room        = undefined;
+      session.product     = user.product;
       return session;
     } else {
       const newSession = this.createSession(socket, user);
@@ -50,7 +50,7 @@ export default class SessionStore {
       socket,
       username:          user.username,
       name:              user.name,
-      isConnectedToRoom: false,
+      isListening: false,
       canPlay:           false,
       product:           user.product
     };

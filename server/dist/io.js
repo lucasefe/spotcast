@@ -51,7 +51,7 @@ exports.initialize = function (httpServer) {
                 if (session) {
                     const { username } = session;
                     logger_1.default.debug(`User ${username} disconnected`);
-                    if (session.isConnectedToRoom)
+                    if (session.isListening)
                         disconnectPlayer(session);
                     else {
                         const wasPlaying = session.currentPlayer && session.currentPlayer.isPlaying;
@@ -105,7 +105,7 @@ exports.initialize = function (httpServer) {
                     socket.leave(session.room);
                 }
                 // if user was connected, let's reset it.
-                session.isConnectedToRoom = false;
+                session.isListening = false;
                 session.room = room;
                 socket.join(room);
                 logger_1.default.debug(`User ${username} joined room ${room}`);
@@ -166,7 +166,7 @@ function refreshSession(session) {
         const statusChanged = session.canPlay !== canPlay;
         session.canPlay = canPlay;
         session.currentPlayer = user.currentPlayer;
-        session.isConnectedToRoom = canPlay && session.isConnectedToRoom;
+        session.isListening = canPlay && session.isListening;
         if (statusChanged)
             emitSessionUpdated(session);
     });
@@ -188,7 +188,7 @@ function synchronizeListeners(sockets, sessionsListening, player) {
             return __awaiter(this, void 0, void 0, function* () {
                 const { username } = session;
                 const user = yield user_1.findUser(username);
-                if (session.isConnectedToRoom && session.canPlay) {
+                if (session.isListening && session.canPlay) {
                     const isPlayingSameSong = session.currentPlayer.item.uri === player.item.uri;
                     const isTooApart = Math.abs(session.currentPlayer.progressMS - player.progressMS) > ms_1.default('4s');
                     const shouldPlay = player.isPlaying && (!isPlayingSameSong || isTooApart);
@@ -214,11 +214,11 @@ function synchronizeListeners(sockets, sessionsListening, player) {
     });
 }
 function sessionToJSON(session) {
-    const { isConnectedToRoom } = session;
+    const { isListening } = session;
     const { canPlay } = session;
     const { username } = session;
     const { name } = session;
-    return { username, name, isConnectedToRoom, canPlay };
+    return { username, name, isListening, canPlay };
 }
 function sessionToProfileJSON(session) {
     const json = Object.assign(Object.assign({}, sessionToJSON(session)), { room: session.room, product: session.product });
@@ -282,12 +282,12 @@ function emitNewMessage(sockets, room, message) {
     sockets.in(room).emit('NEW_MESSAGE', { message });
 }
 function connectPlayer(session) {
-    if (session.isConnectedToRoom) {
+    if (session.isListening) {
         logger_1.default.warn(`User ${session.username} already connected player to ${session.room}. `);
         return;
     }
     if (session.canPlay) {
-        session.isConnectedToRoom = true;
+        session.isListening = true;
         logger_1.default.debug(`User ${session.username} connected player to ${session.room}. `);
         emitSessionUpdated(session);
     }
@@ -295,7 +295,7 @@ function connectPlayer(session) {
         emitSessionError(session, { name: 'CannotPlay', message: 'You cannot connect because your player is off, or it is not playing anything.' });
 }
 function disconnectPlayer(session) {
-    session.isConnectedToRoom = false;
+    session.isListening = false;
     logger_1.default.debug(`User ${session.username} disconnected player from ${session.room}. `);
     emitSessionUpdated(session);
 }

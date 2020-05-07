@@ -10,7 +10,7 @@
       <br/>
     </div>
     <div v-if="canConnect">
-      <div v-if="profile.isConnectedToRoom">
+      <div v-if="profile.isListening">
         <button class="button is-outlined" v-on:click="disconnectPlayer">Disconnect your player</button>
       </div>
       <div v-else>

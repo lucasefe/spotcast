@@ -9,7 +9,7 @@
           <td v-if="session.username === member.username">
             playing
           </td>
-          <td v-else-if="member.isConnectedToRoom">
+          <td v-else-if="member.isListening">
             connected
           </td>
           <td v-else>

@@ -42,7 +42,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           const { username } = session;
           logger.debug(`User ${username} disconnected`);
 
-          if (session.isConnectedToRoom)
+          if (session.isListening)
             disconnectPlayer(session);
           else {
             const wasPlaying = session.currentPlayer && session.currentPlayer.isPlaying;
@@ -106,7 +106,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
         }
 
         // if user was connected, let's reset it.
-        session.isConnectedToRoom = false;
+        session.isListening = false;
 
         session.room = room;
         socket.join(room);
@@ -175,9 +175,9 @@ async function refreshSession(session): Promise<void> {
   debug({ username, canPlay, product });
   const statusChanged = session.canPlay !== canPlay;
 
-  session.canPlay           = canPlay;
-  session.currentPlayer     = user.currentPlayer;
-  session.isConnectedToRoom = canPlay && session.isConnectedToRoom;
+  session.canPlay       = canPlay;
+  session.currentPlayer = user.currentPlayer;
+  session.isListening   = canPlay && session.isListening;
 
   if (statusChanged)
     emitSessionUpdated(session);
@@ -201,7 +201,7 @@ async function synchronizeListeners(sockets, sessionsListening, player): Promise
   await Bluebird.map(sessionsListening, async function(session) {
     const { username } = session;
     const user         = await findUser(username);
-    if (session.isConnectedToRoom && session.canPlay) {
+    if (session.isListening && session.canPlay) {
       const isPlayingSameSong = session.currentPlayer.item.uri === player.item.uri;
       const isTooApart        = Math.abs(session.currentPlayer.progressMS - player.progressMS) > ms('4s');
       const shouldPlay        = player.isPlaying && (!isPlayingSameSong || isTooApart);
@@ -229,7 +229,7 @@ async function synchronizeListeners(sockets, sessionsListening, player): Promise
 interface SessionResponse {
   username: string;
   name: string;
-  isConnectedToRoom: boolean;
+  isListening: boolean;
   canPlay: boolean;
 }
 
@@ -241,12 +241,12 @@ interface ProfileResponse extends SessionResponse {
 
 
 function sessionToJSON(session: Session): SessionResponse {
-  const { isConnectedToRoom } = session;
-  const { canPlay }           = session;
-  const { username }          = session;
-  const { name }              = session;
+  const { isListening } = session;
+  const { canPlay }     = session;
+  const { username }    = session;
+  const { name }        = session;
 
-  return { username, name, isConnectedToRoom, canPlay };
+  return { username, name, isListening, canPlay };
 }
 
 
@@ -352,13 +352,13 @@ function emitNewMessage(sockets, room, message): void {
 }
 
 function connectPlayer(session): void {
-  if (session.isConnectedToRoom) {
+  if (session.isListening) {
     logger.warn(`User ${session.username} already connected player to ${session.room}. `);
     return;
   }
 
   if (session.canPlay) {
-    session.isConnectedToRoom = true;
+    session.isListening = true;
     logger.debug(`User ${session.username} connected player to ${session.room}. `);
     emitSessionUpdated(session);
   } else
@@ -367,7 +367,7 @@ function connectPlayer(session): void {
 }
 
 function disconnectPlayer(session): void {
-  session.isConnectedToRoom = false;
+  session.isListening = false;
   logger.debug(`User ${session.username} disconnected player from ${session.room}. `);
   emitSessionUpdated(session);
 }
