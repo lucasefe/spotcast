@@ -165,7 +165,7 @@ function refreshSession(session) {
         debug({ username, canPlay, product });
         const statusChanged = session.canPlay !== canPlay;
         session.canPlay = canPlay;
-        session.previousPlayer = session.currentlyPlaying;
+        session.previouslyPlaying = session.isListening ? session.currentlyPlaying : null;
         session.currentlyPlaying = user.currentlyPlaying;
         session.isListening = canPlay && session.isListening;
         if (statusChanged)
@@ -190,13 +190,25 @@ function synchronizeListeners(sockets, sessionsListening, sessionPlaying) {
             return __awaiter(this, void 0, void 0, function* () {
                 const { username } = session;
                 const user = yield user_1.findUser(username);
+                debug({ username, pre: session.previouslyPlaying, now: session.currentlyPlaying });
                 if (session.isListening && session.canPlay) {
-                    const isPlayingSameSong = session.currentlyPlaying.item.uri === currentlyPlaying.item.uri;
-                    const isTooApart = Math.abs(session.currentlyPlaying.progressMS - currentlyPlaying.progressMS) > ms_1.default('4s');
-                    const shouldPlay = currentlyPlaying.isPlaying && (!isPlayingSameSong || isTooApart);
-                    const shouldPause = !currentlyPlaying.isPlaying && session.currentlyPlaying.isPlaying;
-                    debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
+                    const wasListening = session.previouslyPlaying && session.previouslyPlaying.isPlaying;
+                    const changedSong = wasListening && session.previouslyPlaying.item.uri !== session.currentlyPlaying.item.uri;
+                    const pausedPlayer = session.previouslyPlaying && session.previouslyPlaying.isPlaying && !session.currentlyPlaying.isPlaying;
+                    const shouldDisconnect = changedSong || pausedPlayer;
+                    debug({ username, wasListening, changedSong, pausedPlayer, shouldDisconnect });
+                    if (shouldDisconnect) {
+                        const reason = getDisconnectReason({ changedSong, pausedPlayer });
+                        emitSessionError(session, { name: 'UserDisconnected', message: 'User disconnected', reason });
+                        disconnectPlayer(session);
+                        return;
+                    }
                     try {
+                        const isPlayingSameSong = session.currentlyPlaying.item.uri === currentlyPlaying.item.uri;
+                        const isTooApart = Math.abs(session.currentlyPlaying.progressMS - currentlyPlaying.progressMS) > ms_1.default('4s');
+                        const shouldPlay = currentlyPlaying.isPlaying && (!isPlayingSameSong || isTooApart);
+                        const shouldPause = !currentlyPlaying.isPlaying && session.currentlyPlaying.isPlaying;
+                        debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
                         if (shouldPlay)
                             yield spotify.play(user, currentlyPlaying.item.uri, currentlyPlaying.progressMS);
                         else if (shouldPause)
@@ -214,6 +226,14 @@ function synchronizeListeners(sockets, sessionsListening, sessionPlaying) {
             });
         });
     });
+}
+function getDisconnectReason({ changedSong, pausedPlayer }) {
+    if (changedSong)
+        return 'You switched songs';
+    else if (pausedPlayer)
+        return 'You paused your player';
+    else
+        return 'unknown reason :-(';
 }
 function sessionToJSON(session) {
     const { isListening } = session;

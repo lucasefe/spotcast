@@ -175,10 +175,10 @@ async function refreshSession(session): Promise<void> {
   debug({ username, canPlay, product });
   const statusChanged = session.canPlay !== canPlay;
 
-  session.canPlay          = canPlay;
-  session.previousPlayer   = session.currentlyPlaying;
-  session.currentlyPlaying = user.currentlyPlaying;
-  session.isListening      = canPlay && session.isListening;
+  session.canPlay           = canPlay;
+  session.previouslyPlaying = session.isListening ? session.currentlyPlaying : null;
+  session.currentlyPlaying  = user.currentlyPlaying;
+  session.isListening       = canPlay && session.isListening;
 
   if (statusChanged)
     emitSessionUpdated(session);
@@ -203,19 +203,35 @@ async function synchronizeListeners(sockets, sessionsListening, sessionPlaying):
   await Bluebird.map(sessionsListening, async function(session) {
     const { username } = session;
     const user         = await findUser(username);
-    if (session.isListening && session.canPlay) {
-      const isPlayingSameSong = session.currentlyPlaying.item.uri === currentlyPlaying.item.uri;
-      const isTooApart        = Math.abs(session.currentlyPlaying.progressMS - currentlyPlaying.progressMS) > ms('4s');
-      const shouldPlay        = currentlyPlaying.isPlaying && (!isPlayingSameSong || isTooApart);
-      const shouldPause       = !currentlyPlaying.isPlaying && session.currentlyPlaying.isPlaying;
+    debug({ username, pre: session.previouslyPlaying, now: session.currentlyPlaying });
 
-      debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
+    if (session.isListening && session.canPlay) {
+      const wasListening     = session.previouslyPlaying && session.previouslyPlaying.isPlaying;
+      const changedSong      = wasListening && session.previouslyPlaying.item.uri !== session.currentlyPlaying.item.uri;
+      const pausedPlayer     = session.previouslyPlaying && session.previouslyPlaying.isPlaying && !session.currentlyPlaying.isPlaying;
+      const shouldDisconnect = changedSong || pausedPlayer;
+
+      debug({ username, wasListening, changedSong, pausedPlayer, shouldDisconnect });
+      if (shouldDisconnect) {
+        const reason = getDisconnectReason({ changedSong, pausedPlayer });
+        emitSessionError(session, { name: 'UserDisconnected', message: 'User disconnected', reason });
+        disconnectPlayer(session);
+        return;
+      }
 
       try {
+        const isPlayingSameSong = session.currentlyPlaying.item.uri === currentlyPlaying.item.uri;
+        const isTooApart        = Math.abs(session.currentlyPlaying.progressMS - currentlyPlaying.progressMS) > ms('4s');
+        const shouldPlay        = currentlyPlaying.isPlaying && (!isPlayingSameSong || isTooApart);
+        const shouldPause       = !currentlyPlaying.isPlaying && session.currentlyPlaying.isPlaying;
+
+        debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
+
         if (shouldPlay)
           await spotify.play(user, currentlyPlaying.item.uri, currentlyPlaying.progressMS);
         else if (shouldPause)
           await spotify.pause(user);
+
       } catch (error) {
         if (error instanceof spotify.PlayerNotRespondingError) {
           user.set({ 'currentlyPlaying.lastErrorStatus': 404 });
@@ -226,6 +242,15 @@ async function synchronizeListeners(sockets, sessionsListening, sessionPlaying):
       }
     }
   });
+}
+
+function getDisconnectReason({ changedSong, pausedPlayer }): string {
+  if (changedSong)
+    return 'You switched songs';
+  else if (pausedPlayer)
+    return 'You paused your player';
+  else
+    return 'unknown reason :-(';
 }
 
 interface SessionResponse {

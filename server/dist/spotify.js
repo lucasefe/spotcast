@@ -119,7 +119,10 @@ function getSpotifyAPIClient(user) {
     instance.interceptors.response.use(response => {
         return response;
     }, function (error) {
-        debug(error);
+        if (error.response.error)
+            debug(error.response.error);
+        else
+            debug(error);
         const originalRequest = error.config;
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;

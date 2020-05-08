@@ -4,6 +4,9 @@
       <div v-if="error.name === 'PlayerNotResponding'" class="notification is-warning">
         Your player is not responding. Make sure your Spotify is running. Also, if you are using the web version, try playing something.
       </div>
+      <div v-if="error.name === 'UserDisconnected'" class="notification is-warning">
+        Disconnecting you, reason: "{{error.reason}}"
+      </div>
       <div v-else class="notification is-warning">
         {{ this.error.message}}
       </div>
@@ -45,6 +48,7 @@
       },
       SESSION_UPDATED: function({ profile }) {
         this.profile = profile;
+        this.error = ''
       },
       SESSION_ERROR: function({ error }) {
         this.error = error
