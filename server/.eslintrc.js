@@ -34,7 +34,6 @@ module.exports = {
         "dot-notation": 2,
         "eol-last": 2,
         eqeqeq: [2, "smart"],
-        "func-style": [2, "declaration"],
         "global-require": 2,
         "handle-callback-err": [2, "error"],
         indent: [2, 2, { SwitchCase: 1 }],
