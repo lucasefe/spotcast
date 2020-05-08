@@ -15,7 +15,12 @@
           <div class="tile">
             <div class="tile is-parent is-vertical">
               <article class="tile is-child">
-                <PlayerState></PlayerState>
+                <div v-if="player">
+                  <Player v-bind:player="player"></Player>
+                </div>
+                <div v-else>
+                  You're currently not playing anything.
+                </div>
               </article>
               <article class="tile is-child">
                 <PlayerMembers></PlayerMembers>
@@ -39,17 +44,27 @@
 import Chat from "../components/Chat.vue";
 import Profile from "../components/Profile.vue";
 import PlayerMembers from "../components/PlayerMembers.vue"
-import PlayerState from "../components/PlayerState.vue"
+import Player from "../components/Player.vue"
 
 export default {
   components: {
     Chat,
     PlayerMembers,
-    PlayerState,
+    Player,
     Profile
   },
 
+  sockets: {
+    PLAYER_UPDATED: function({ player, session }) {
+      this.player = player;
+      this.session = session;
+    }
+  },
+
   data: () => ({
+    player: '',
+    session: ''
   })
 };
+
 </script>

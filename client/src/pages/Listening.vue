@@ -15,7 +15,13 @@
           <div class="tile">
             <div class="tile is-parent is-vertical">
               <article class="tile is-child">
-                <PlayerState></PlayerState>
+                <div v-if="player">
+                  <h2 class="subtitle">{{ this.session.name }}'s Fogón. </h2>
+                  <Player v-bind:player="player"></Player>
+                </div>
+                <div v-else>
+                  Nothing is currently playing on {{ $route.params.room }}
+                </div>
               </article>
               <article class="tile is-child">
                 <PlayerActions></PlayerActions>
@@ -38,14 +44,14 @@
 
 import Chat from "../components/Chat.vue";
 import Profile from "../components/Profile.vue";
-import PlayerState from "../components/PlayerState.vue";
+import Player from "../components/Player.vue";
 import PlayerActions from "../components/PlayerActions.vue";
 
 export default {
   components: {
     Chat,
     Profile,
-    PlayerState,
+    Player,
     PlayerActions
   },
   sockets: {
@@ -59,13 +65,18 @@ export default {
       if (routeRoom && routeRoom !== this.room) {
         this.$socket.emit('JOIN', { room: routeRoom})
       }
+    },
+    PLAYER_UPDATED: function({ player, session }) {
+      this.player = player;
+      this.session = session;
     }
   },
-
   data: () => ({
     username: '',
     name: '',
-    room: ''
+    room: '',
+    player: '',
+    session: ''
   })
 };
 </script>
