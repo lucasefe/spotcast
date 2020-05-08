@@ -1,5 +1,6 @@
 import * as auth                            from './auth';
 import * as http                            from 'http';
+import { configure, getMongoURI }           from  '../config';
 import { default as connectMongoDBSession } from 'connect-mongodb-session';
 import bodyParser                           from 'body-parser';
 import cookieParser                         from 'cookie-parser';
@@ -18,18 +19,13 @@ import session                              from 'express-session';
 require('../lib/router_with_promises');
 
 export default function configureServer(): http.Server {
-  const mongoURI = process.env.MONGODB_URI ?
-    process.env.MONGODB_URI  :
-    'mongodb://localhost:27017/fogon';
 
-  mongoose.connect(mongoURI, {
-    useNewUrlParser: true
-  });
+  configure();
 
   const app        = express();
   const MongoStore = connectMongoDBSession(session);
   const store      = new MongoStore({
-    uri:        mongoURI,
+    uri:        getMongoURI(),
     collection: 'sessions'
   });
 
