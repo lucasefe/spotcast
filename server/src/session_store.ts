@@ -8,7 +8,8 @@ export interface Session {
   name: string;
   room?: string;
   product: string;
-  currentPlayer?: spotify.CurrentPlayer;
+  currentlyPlaying?: spotify.PlayingState;
+  previouslyPlaying?: spotify.PlayingState;
 
   isListening: boolean;
   canPlay: boolean;

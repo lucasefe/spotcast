@@ -54,7 +54,7 @@ exports.initialize = function (httpServer) {
                     if (session.isListening)
                         disconnectPlayer(session);
                     else {
-                        const wasPlaying = session.currentPlayer && session.currentPlayer.isPlaying;
+                        const wasPlaying = session.currentlyPlaying && session.currentlyPlaying.isPlaying;
                         if (wasPlaying)
                             disconnectListeners(sockets, session.room);
                     }
@@ -161,11 +161,12 @@ function refreshSession(session) {
     return __awaiter(this, void 0, void 0, function* () {
         const { username, product } = session;
         const user = yield user_1.updateUser(username);
-        const canPlay = !!(user && user.currentPlayer && user.currentPlayer.device);
+        const canPlay = !!(user && user.currentlyPlaying && user.currentlyPlaying.device);
         debug({ username, canPlay, product });
         const statusChanged = session.canPlay !== canPlay;
         session.canPlay = canPlay;
-        session.currentPlayer = user.currentPlayer;
+        session.previousPlayer = session.currentlyPlaying;
+        session.currentlyPlaying = user.currentlyPlaying;
         session.isListening = canPlay && session.isListening;
         if (statusChanged)
             emitSessionUpdated(session);
@@ -179,30 +180,31 @@ function updatePlayersAndListeners(sockets, session) {
         emitPlayerUpdated(sockets, room, player);
         const sessionsListening = getListeningSessions(room);
         logger_1.default.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
-        yield synchronizeListeners(sockets, sessionsListening, session.currentPlayer);
+        yield synchronizeListeners(sockets, sessionsListening, session);
     });
 }
-function synchronizeListeners(sockets, sessionsListening, player) {
+function synchronizeListeners(sockets, sessionsListening, sessionPlaying) {
     return __awaiter(this, void 0, void 0, function* () {
+        const { currentlyPlaying } = sessionPlaying;
         yield bluebird_1.default.map(sessionsListening, function (session) {
             return __awaiter(this, void 0, void 0, function* () {
                 const { username } = session;
                 const user = yield user_1.findUser(username);
                 if (session.isListening && session.canPlay) {
-                    const isPlayingSameSong = session.currentPlayer.item.uri === player.item.uri;
-                    const isTooApart = Math.abs(session.currentPlayer.progressMS - player.progressMS) > ms_1.default('4s');
-                    const shouldPlay = player.isPlaying && (!isPlayingSameSong || isTooApart);
-                    const shouldPause = !player.isPlaying && session.currentPlayer.isPlaying;
+                    const isPlayingSameSong = session.currentlyPlaying.item.uri === currentlyPlaying.item.uri;
+                    const isTooApart = Math.abs(session.currentlyPlaying.progressMS - currentlyPlaying.progressMS) > ms_1.default('4s');
+                    const shouldPlay = currentlyPlaying.isPlaying && (!isPlayingSameSong || isTooApart);
+                    const shouldPause = !currentlyPlaying.isPlaying && session.currentlyPlaying.isPlaying;
                     debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
                     try {
                         if (shouldPlay)
-                            yield spotify.play(user, player.item.uri, player.progressMS);
+                            yield spotify.play(user, currentlyPlaying.item.uri, currentlyPlaying.progressMS);
                         else if (shouldPause)
                             yield spotify.pause(user);
                     }
                     catch (error) {
                         if (error instanceof spotify.PlayerNotRespondingError) {
-                            user.set({ 'currentPlayer.lastErrorStatus': 404 });
+                            user.set({ 'currentlyPlaying.lastErrorStatus': 404 });
                             yield user.save();
                             emitSessionError(session, { name: 'PlayerNotResponding', message: 'Your player is not responding. ' });
                             disconnectPlayer(session);
@@ -230,7 +232,7 @@ function getPlayerState(session) {
             name: session.name,
             username: session.username
         },
-        player: getPlayer(session.currentPlayer)
+        player: getPlayer(session.currentlyPlaying)
     };
 }
 function getPlayer(player) {

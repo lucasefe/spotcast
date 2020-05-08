@@ -1,5 +1,5 @@
 import * as spotify                        from '../spotify';
-import { CurrentPlayer }                   from '../spotify';
+import { PlayingState }                    from '../spotify';
 import mongoose, { Document, Schema }      from 'mongoose';
 
 
@@ -15,7 +15,7 @@ export interface UserModel extends Document {
   expiresIn: number;
   accessTokenRefreshedAt: Date;
 
-  currentPlayer?: CurrentPlayer;
+  currentlyPlaying?: PlayingState;
 }
 
 
@@ -31,7 +31,7 @@ const UserSchema = new Schema({
   expiresIn:              { type: Number, required: true },
   accessTokenRefreshedAt: { type: Date },
 
-  currentPlayer: {
+  currentlyPlaying: {
     device:               { type: Object },
     shuffleState:         { type: Boolean },
     repeatState:          {
@@ -56,15 +56,15 @@ export default User;
 export async function updateUser(username): Promise<UserModel> {
   const user = await findUser(username);
   try {
-    const response      = await spotify.getCurrentPlayer(user);
-    const currentPlayer = parseCurrentPlayer(response.data);
-    user.set({ currentPlayer });
+    const response         = await spotify.getPlayingState(user);
+    const currentlyPlaying = parsePlayingState(response.data);
+    user.set({ currentlyPlaying });
     await user.save();
     return user;
   } catch (error) {
     const playerCannotBeFound = error.response && (error.response.status === 404 || error.response.status === 204);
     if (playerCannotBeFound) {
-      user.set({ currentPlayer: null });
+      user.set({ currentlyPlaying: null });
       await user.save();
       return user;
     } else
@@ -82,7 +82,7 @@ export async function findUser(username): Promise<UserModel> {
 }
 
 
-function parseCurrentPlayer(data): spotify.CurrentPlayerResponse | null {
+function parsePlayingState(data): spotify.PlayingStateResponse | null {
   if (data) {
     return {
       device:               data.device,

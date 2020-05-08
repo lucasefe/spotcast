@@ -54,7 +54,7 @@ function getAccessToken(user) {
     });
 }
 exports.getAccessToken = getAccessToken;
-function getCurrentPlayer(user) {
+function getPlayingState(user) {
     return __awaiter(this, void 0, void 0, function* () {
         const { accessToken } = user;
         const options = {
@@ -69,7 +69,7 @@ function getCurrentPlayer(user) {
         return response;
     });
 }
-exports.getCurrentPlayer = getCurrentPlayer;
+exports.getPlayingState = getPlayingState;
 function play(user, itemURI, progressMS) {
     return __awaiter(this, void 0, void 0, function* () {
         debug(`Playing  ${user.username}:${itemURI}:${progressMS}`);

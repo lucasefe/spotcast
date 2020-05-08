@@ -45,7 +45,7 @@ exports.initialize = function(httpServer: http.Server): sio.Server {
           if (session.isListening)
             disconnectPlayer(session);
           else {
-            const wasPlaying = session.currentPlayer && session.currentPlayer.isPlaying;
+            const wasPlaying = session.currentlyPlaying && session.currentlyPlaying.isPlaying;
             if (wasPlaying)
               disconnectListeners(sockets, session.room);
           }
@@ -171,13 +171,14 @@ async function updatePlayers(sockets): Promise<void> {
 async function refreshSession(session): Promise<void> {
   const { username, product } = session;
   const user                  = await updateUser(username);
-  const canPlay               = !!(user && user.currentPlayer && user.currentPlayer.device);
+  const canPlay               = !!(user && user.currentlyPlaying && user.currentlyPlaying.device);
   debug({ username, canPlay, product });
   const statusChanged = session.canPlay !== canPlay;
 
-  session.canPlay       = canPlay;
-  session.currentPlayer = user.currentPlayer;
-  session.isListening   = canPlay && session.isListening;
+  session.canPlay          = canPlay;
+  session.previousPlayer   = session.currentlyPlaying;
+  session.currentlyPlaying = user.currentlyPlaying;
+  session.isListening      = canPlay && session.isListening;
 
   if (statusChanged)
     emitSessionUpdated(session);
@@ -193,30 +194,31 @@ async function updatePlayersAndListeners(sockets, session): Promise<void> {
   const sessionsListening = getListeningSessions(room);
 
   logger.debug(`Sessions listening to ${username}: ${sessionsListening.length}`);
-  await synchronizeListeners(sockets, sessionsListening, session.currentPlayer);
+  await synchronizeListeners(sockets, sessionsListening, session);
 }
 
 
-async function synchronizeListeners(sockets, sessionsListening, player): Promise<void> {
+async function synchronizeListeners(sockets, sessionsListening, sessionPlaying): Promise<void> {
+  const { currentlyPlaying } = sessionPlaying;
   await Bluebird.map(sessionsListening, async function(session) {
     const { username } = session;
     const user         = await findUser(username);
     if (session.isListening && session.canPlay) {
-      const isPlayingSameSong = session.currentPlayer.item.uri === player.item.uri;
-      const isTooApart        = Math.abs(session.currentPlayer.progressMS - player.progressMS) > ms('4s');
-      const shouldPlay        = player.isPlaying && (!isPlayingSameSong || isTooApart);
-      const shouldPause       = !player.isPlaying && session.currentPlayer.isPlaying;
+      const isPlayingSameSong = session.currentlyPlaying.item.uri === currentlyPlaying.item.uri;
+      const isTooApart        = Math.abs(session.currentlyPlaying.progressMS - currentlyPlaying.progressMS) > ms('4s');
+      const shouldPlay        = currentlyPlaying.isPlaying && (!isPlayingSameSong || isTooApart);
+      const shouldPause       = !currentlyPlaying.isPlaying && session.currentlyPlaying.isPlaying;
 
       debug({ username, isPlayingSameSong, isTooApart, shouldPlay, shouldPause });
 
       try {
         if (shouldPlay)
-          await spotify.play(user, player.item.uri, player.progressMS);
+          await spotify.play(user, currentlyPlaying.item.uri, currentlyPlaying.progressMS);
         else if (shouldPause)
           await spotify.pause(user);
       } catch (error) {
         if (error instanceof spotify.PlayerNotRespondingError) {
-          user.set({ 'currentPlayer.lastErrorStatus': 404 });
+          user.set({ 'currentlyPlaying.lastErrorStatus': 404 });
           await user.save();
           emitSessionError(session, { name: 'PlayerNotResponding', message: 'Your player is not responding. ' });
           disconnectPlayer(session);
@@ -287,7 +289,7 @@ function getPlayerState(session: Session): PlayerStateResponse {
       name:     session.name,
       username: session.username
     },
-    player: getPlayer(session.currentPlayer)
+    player: getPlayer(session.currentlyPlaying)
   };
 }
 

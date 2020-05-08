@@ -28,7 +28,7 @@ const UserSchema = new mongoose_1.Schema({
     refreshToken: { type: String, required: true },
     expiresIn: { type: Number, required: true },
     accessTokenRefreshedAt: { type: Date },
-    currentPlayer: {
+    currentlyPlaying: {
         device: { type: Object },
         shuffleState: { type: Boolean },
         repeatState: {
@@ -50,16 +50,16 @@ function updateUser(username) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield findUser(username);
         try {
-            const response = yield spotify.getCurrentPlayer(user);
-            const currentPlayer = parseCurrentPlayer(response.data);
-            user.set({ currentPlayer });
+            const response = yield spotify.getPlayingState(user);
+            const currentlyPlaying = parsePlayingState(response.data);
+            user.set({ currentlyPlaying });
             yield user.save();
             return user;
         }
         catch (error) {
             const playerCannotBeFound = error.response && (error.response.status === 404 || error.response.status === 204);
             if (playerCannotBeFound) {
-                user.set({ currentPlayer: null });
+                user.set({ currentlyPlaying: null });
                 yield user.save();
                 return user;
             }
@@ -79,7 +79,7 @@ function findUser(username) {
     });
 }
 exports.findUser = findUser;
-function parseCurrentPlayer(data) {
+function parsePlayingState(data) {
     if (data) {
         return {
             device: data.device,

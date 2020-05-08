@@ -56,7 +56,7 @@ export interface Item {
   track_number: number;
 }
 
-export interface CurrentPlayer {
+export interface PlayingState {
   device: Record<string, any>;
   shuffleState: boolean;
   repeatState: string;
@@ -74,7 +74,7 @@ interface RefreshAccessTokenResponse {
 }
 
 
-export interface CurrentPlayerResponse {
+export interface PlayingStateResponse {
   device: Record<string, any>;
   shuffleState: boolean;
   repeatState: string;
@@ -114,7 +114,7 @@ export async function getAccessToken(user): Promise<RefreshAccessTokenResponse> 
   };
 }
 
-export async function getCurrentPlayer(user: UserModel): Promise<AxiosResponse> {
+export async function getPlayingState(user: UserModel): Promise<AxiosResponse> {
   const { accessToken } = user;
 
   const options: AxiosRequestConfig = {
