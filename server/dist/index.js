@@ -12,13 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const auth = __importStar(require("./auth"));
 const http = __importStar(require("http"));
+const config_1 = require("../config");
 const connect_mongodb_session_1 = __importDefault(require("connect-mongodb-session"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const cors_1 = __importDefault(require("cors"));
 const ejs_1 = __importDefault(require("ejs"));
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const morgan_1 = __importDefault(require("morgan"));
 const passport_1 = __importDefault(require("passport"));
 const rollbar_1 = __importDefault(require("../lib/rollbar"));
@@ -26,16 +26,11 @@ const express_session_1 = __importDefault(require("express-session"));
 /* eslint-disable camelcase */
 require('../lib/router_with_promises');
 function configureServer() {
-    const mongoURI = process.env.MONGODB_URI ?
-        process.env.MONGODB_URI :
-        'mongodb://localhost:27017/fogon';
-    mongoose_1.default.connect(mongoURI, {
-        useNewUrlParser: true
-    });
+    config_1.configure();
     const app = express_1.default();
     const MongoStore = connect_mongodb_session_1.default(express_session_1.default);
     const store = new MongoStore({
-        uri: mongoURI,
+        uri: config_1.getMongoURI(),
         collection: 'sessions'
     });
     app.use(rollbar_1.default.errorHandler());

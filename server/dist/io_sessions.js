@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const connect_mongodb_session_1 = __importDefault(require("connect-mongodb-session"));
+const config_1 = require("../config");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_session_1 = __importDefault(require("express-session"));
 const logger_1 = __importDefault(require("./util/logger"));
@@ -11,11 +12,8 @@ const passport_1 = __importDefault(require("passport"));
 const passport_socketio_1 = __importDefault(require("passport.socketio"));
 function default_1(sockets) {
     const MongoStore = connect_mongodb_session_1.default(express_session_1.default);
-    const mongoURI = process.env.MONGODB_URI ?
-        process.env.MONGODB_URI :
-        'mongodb://localhost:27017/fogon';
     const store = new MongoStore({
-        uri: mongoURI,
+        uri: config_1.getMongoURI(),
         collection: 'sessions'
     });
     sockets.use(passport_socketio_1.default.authorize({
