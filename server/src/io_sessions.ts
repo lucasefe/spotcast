@@ -1,5 +1,5 @@
 import { default as connectMongoDBSession }                  from 'connect-mongodb-session';
-import { getMongoURI }                                       from '../config';
+import { getMongoURI }                                       from './config';
 import cookieParser                                          from 'cookie-parser';
 import expressSession                                        from 'express-session';
 import logger                                                from './util/logger';

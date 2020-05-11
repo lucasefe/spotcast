@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const auth = __importStar(require("./auth"));
 const http = __importStar(require("http"));
-const config_1 = require("./config");
+const config_1 = require("../config");
 const connect_mongodb_session_1 = __importDefault(require("connect-mongodb-session"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));

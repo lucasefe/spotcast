@@ -1,6 +1,6 @@
 import * as auth                             from './auth';
 import * as http                             from 'http';
-import { configure, getMongoURI }            from  '../config';
+import { configure, getMongoURI }            from  './config';
 import { default as connectMongoDBSession }  from 'connect-mongodb-session';
 import bodyParser                            from 'body-parser';
 import cookieParser                          from 'cookie-parser';
@@ -11,7 +11,6 @@ import morgan                                from 'morgan';
 import passport                              from 'passport';
 import rollbar                               from '../lib/rollbar';
 import session                               from 'express-session';
-import SessionStore                          from './session_store';
 
 /* eslint-disable camelcase */
 

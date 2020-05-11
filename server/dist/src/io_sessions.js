@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const connect_mongodb_session_1 = __importDefault(require("connect-mongodb-session"));
-const config_1 = require("./config");
+const config_1 = require("../config");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_session_1 = __importDefault(require("express-session"));
 const logger_1 = __importDefault(require("./util/logger"));

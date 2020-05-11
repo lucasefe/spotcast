@@ -1,9 +1,7 @@
 import Bluebird from 'bluebird';
 import Debug    from 'debug';
-import HTTPS    from 'https';
-import logger   from '../src/util/logger';
+import logger   from '../util/logger';
 import Mongoose from 'mongoose';
-import ms       from 'ms';
 
 const debug = Debug('mongo');
 
