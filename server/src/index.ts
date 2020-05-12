@@ -11,6 +11,8 @@ import morgan                                from 'morgan';
 import passport                              from 'passport';
 import rollbar                               from '../lib/rollbar';
 import session                               from 'express-session';
+import SessionStore                          from './session_store';
+import startWorker                           from './worker';
 
 /* eslint-disable camelcase */
 
@@ -19,6 +21,8 @@ require('../lib/router_with_promises');
 export default function configureServer(): http.Server {
 
   configure();
+
+  const sessions = new SessionStore();
 
   const app        = express();
   const MongoStore = connectMongoDBSession(session);
@@ -58,7 +62,10 @@ export default function configureServer(): http.Server {
 
   const httpServer = http.createServer(app);
 
-  require('./io').initialize(httpServer); /* eslint-disable-line global-require */
+  const sockets    = require('./io').initialize(httpServer, sessions); /* eslint-disable-line global-require */
+  const stopWorker = startWorker(sockets,  sessions);
+
+  httpServer.on('close', stopWorker);
 
   return httpServer;
 }

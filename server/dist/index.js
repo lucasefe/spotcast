@@ -23,10 +23,13 @@ const morgan_1 = __importDefault(require("morgan"));
 const passport_1 = __importDefault(require("passport"));
 const rollbar_1 = __importDefault(require("../lib/rollbar"));
 const express_session_1 = __importDefault(require("express-session"));
+const session_store_1 = __importDefault(require("./session_store"));
+const worker_1 = __importDefault(require("./worker"));
 /* eslint-disable camelcase */
 require('../lib/router_with_promises');
 function configureServer() {
     config_1.configure();
+    const sessions = new session_store_1.default();
     const app = express_1.default();
     const MongoStore = connect_mongodb_session_1.default(express_session_1.default);
     const store = new MongoStore({
@@ -58,7 +61,9 @@ function configureServer() {
         res.render('index.html');
     });
     const httpServer = http.createServer(app);
-    require('./io').initialize(httpServer); /* eslint-disable-line global-require */
+    const sockets = require('./io').initialize(httpServer, sessions); /* eslint-disable-line global-require */
+    const stopWorker = worker_1.default(sockets, sessions);
+    httpServer.on('close', stopWorker);
     return httpServer;
 }
 exports.default = configureServer;
